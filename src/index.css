@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    min-width: 1280px;
+  }
+
+  body {
+    @apply bg-stone-950 text-cream font-sans;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer utilities {
+  .text-cream {
+    color: #F5F0E8;
+  }
+  .bg-warm-dark {
+    background-color: #1A1410;
+  }
+  .bg-warm-darker {
+    background-color: #0F0D0A;
+  }
+  .bg-warm-card {
+    background-color: #231E18;
+  }
+  .bg-warm-card-hover {
+    background-color: #2D2620;
+  }
+  .border-warm {
+    border-color: #3D3530;
+  }
+  .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+  .font-sans-dm {
+    font-family: 'DM Sans', sans-serif;
+  }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #1A1410;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #D97706;
+  border-radius: 2px;
+}
