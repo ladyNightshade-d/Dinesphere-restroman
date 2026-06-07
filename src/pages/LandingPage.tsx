@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Star, MapPin, Clock, ShieldCheck, ChefHat } from 'lucide-react';
+import { ArrowRight, MapPin, Clock, ShieldCheck, ChefHat } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { featuredDishes } from '../data/dummyData';
 

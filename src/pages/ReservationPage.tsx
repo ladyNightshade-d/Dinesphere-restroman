@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Users, CheckCircle2, Calendar, Clock } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import { restaurants } from '../data/dummyData';
+import { restaurantService } from '../services/restaurant.service';
+import { reservationService } from '../services/reservation.service';
+import { useAuth } from '../context/AuthContext';
 
 const timeSlots = [
   '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
@@ -15,7 +17,14 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
 
 export default function ReservationPage() {
   const { id } = useParams();
-  const restaurant = restaurants.find(r => r.id === id) || restaurants[0];
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const [restaurant, setRestaurant] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [reservation, setReservation] = useState<any>(null);
 
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -24,7 +33,14 @@ export default function ReservationPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [guests, setGuests] = useState(2);
   const [notes, setNotes] = useState('');
-  const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      restaurantService.getById(id)
+        .then(setRestaurant)
+        .finally(() => setLoading(false));
+    }
+  }, [id]);
 
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
@@ -33,6 +49,7 @@ export default function ReservationPage() {
     if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
     else setViewMonth(m => m - 1);
   };
+
   const nextMonth = () => {
     if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
     else setViewMonth(m => m + 1);
@@ -43,11 +60,39 @@ export default function ReservationPage() {
     return d < new Date(today.getFullYear(), today.getMonth(), today.getDate());
   };
 
-  const handleConfirm = () => {
-    if (selectedDay && selectedTime) setConfirmed(true);
+  const handleConfirm = async () => {
+    if (!user) { navigate('/login'); return; }
+    if (!selectedDay || !selectedTime) return;
+
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const date = new Date(viewYear, viewMonth, selectedDay).toISOString();
+      const result = await reservationService.create({
+        restaurant: id!,
+        date,
+        time: selectedTime,
+        guestCount: guests,
+        specialRequests: notes,
+      });
+      setReservation(result);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to make reservation. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (confirmed) {
+  if (loading) return (
+    <div className="bg-warm-950 min-h-screen pt-[72px] flex items-center justify-center">
+      <Navbar />
+      <div className="w-10 h-10 border-2 border-amber border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  // Confirmation screen
+  if (reservation) {
     return (
       <div className="bg-warm-950 min-h-screen pt-[72px] flex items-center justify-center">
         <Navbar />
@@ -57,15 +102,19 @@ export default function ReservationPage() {
           </div>
           <p className="text-amber text-xs font-medium tracking-[0.3em] uppercase mb-3">Reservation Confirmed</p>
           <h1 className="font-display text-4xl text-cream font-semibold mb-2">You're all set!</h1>
-          <p className="text-cream-muted mb-8">Your table at <span className="text-cream">{restaurant.name}</span> has been reserved.</p>
+          <p className="text-cream-muted mb-8">
+            Your table at <span className="text-cream">{restaurant?.name}</span> has been reserved.
+          </p>
           <div className="bg-warm-900 border border-warm-700 rounded-2xl p-6 text-left space-y-3 mb-8">
             <div className="flex justify-between text-sm">
               <span className="text-cream-muted">Restaurant</span>
-              <span className="text-cream font-medium">{restaurant.name}</span>
+              <span className="text-cream font-medium">{restaurant?.name}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-cream-muted">Date</span>
-              <span className="text-cream font-medium">{MONTHS[viewMonth]} {selectedDay}, {viewYear}</span>
+              <span className="text-cream font-medium">
+                {MONTHS[viewMonth]} {selectedDay}, {viewYear}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-cream-muted">Time</span>
@@ -83,10 +132,17 @@ export default function ReservationPage() {
             )}
             <div className="flex justify-between text-sm">
               <span className="text-cream-muted">Confirmation #</span>
-              <span className="text-amber font-semibold">DS-{Math.floor(Math.random() * 9000 + 1000)}</span>
+              <span className="text-amber font-semibold">{reservation.confirmationCode}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-cream-muted">Status</span>
+              <span className="text-green-400 font-medium capitalize">{reservation.status}</span>
             </div>
           </div>
-          <Link to="/" className="inline-flex items-center gap-2 px-8 py-3 bg-amber hover:bg-amber-hover text-warm-950 font-semibold rounded-full transition-colors">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-8 py-3 bg-amber hover:bg-amber-hover text-warm-950 font-semibold rounded-full transition-colors"
+          >
             Return Home
           </Link>
         </div>
@@ -100,9 +156,17 @@ export default function ReservationPage() {
       <div className="max-w-5xl mx-auto px-12 py-12">
         <div className="mb-10">
           <p className="text-amber text-xs font-medium tracking-[0.3em] uppercase mb-2">Table Reservation</p>
-          <h1 className="font-display text-4xl text-cream font-semibold">{restaurant.name}</h1>
-          <p className="text-cream-muted mt-1 text-sm">{restaurant.address} · {restaurant.cuisine}</p>
+          <h1 className="font-display text-4xl text-cream font-semibold">{restaurant?.name}</h1>
+          <p className="text-cream-muted mt-1 text-sm">
+            {restaurant?.address} · {restaurant?.cuisine?.join(', ')}
+          </p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-3 bg-red-900/30 border border-red-700 rounded-xl text-red-400 text-sm">
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-10">
           {/* Calendar */}
@@ -121,7 +185,6 @@ export default function ReservationPage() {
                 </button>
               </div>
             </div>
-
             <div className="grid grid-cols-7 gap-1 mb-2">
               {DAYS.map(d => (
                 <div key={d} className="text-center text-warm-500 text-xs font-medium py-1">{d}</div>
@@ -153,7 +216,6 @@ export default function ReservationPage() {
 
           {/* Time + Guests */}
           <div className="space-y-6">
-            {/* Time Slots */}
             <div className="bg-warm-900 border border-warm-700 rounded-2xl p-6">
               <h3 className="font-display text-lg text-cream mb-4 flex items-center gap-2">
                 <Clock size={17} className="text-amber" />
@@ -176,7 +238,6 @@ export default function ReservationPage() {
               </div>
             </div>
 
-            {/* Guests */}
             <div className="bg-warm-900 border border-warm-700 rounded-2xl p-6">
               <h3 className="font-display text-lg text-cream mb-4 flex items-center gap-2">
                 <Users size={17} className="text-amber" />
@@ -200,7 +261,6 @@ export default function ReservationPage() {
               </div>
             </div>
 
-            {/* Special Requests */}
             <div className="bg-warm-900 border border-warm-700 rounded-2xl p-6">
               <h3 className="font-display text-lg text-cream mb-4">Special Requests</h3>
               <textarea
@@ -214,12 +274,20 @@ export default function ReservationPage() {
 
             <button
               onClick={handleConfirm}
-              disabled={!selectedDay || !selectedTime}
+              disabled={!selectedDay || !selectedTime || submitting}
               className="w-full py-4 bg-amber hover:bg-amber-hover disabled:opacity-40 disabled:cursor-not-allowed text-warm-950 font-semibold rounded-xl transition-colors text-base flex items-center justify-center gap-2"
             >
               <CheckCircle2 size={18} />
-              Confirm Reservation
+              {submitting ? 'Confirming...' : 'Confirm Reservation'}
             </button>
+
+            {!user && (
+              <p className="text-center text-cream-muted text-xs">
+                You need to{' '}
+                <Link to="/login" className="text-amber hover:text-amber-light">login</Link>
+                {' '}to make a reservation
+              </p>
+            )}
           </div>
         </div>
       </div>

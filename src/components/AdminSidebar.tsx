@@ -7,7 +7,6 @@ import {
   Package,
   Calendar,
   Settings,
-  Bell,
   LogOut,
 } from 'lucide-react';
 

@@ -13,6 +13,11 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import KitchenSignUpPage from './pages/kitchen/KitchenSignUpPage';
 import KitchenLoginPage from './pages/kitchen/KitchenLoginPage';
 import KitchenDisplayScreen from './pages/kitchen/KitchenDisplayScreen';
+import AdminOrdersPage from './pages/admin/AdminOrdersPage';
+import AdminMenuPage from './pages/admin/AdminMenuPage';
+import AdminInventoryPage from './pages/admin/AdminInventoryPage';
+import AdminStaffPage from './pages/admin/AdminStaffPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 
 export default function App() {
   return (
@@ -33,11 +38,11 @@ export default function App() {
         <Route path="/admin/signup" element={<AdminSignUpPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/orders" element={<AdminDashboard />} />
-        <Route path="/admin/menu" element={<AdminDashboard />} />
-        <Route path="/admin/inventory" element={<AdminDashboard />} />
-        <Route path="/admin/staff" element={<AdminDashboard />} />
-        <Route path="/admin/settings" element={<AdminDashboard />} />
+        <Route path="/admin/orders" element={<AdminOrdersPage />} />
+        <Route path="/admin/menu" element={<AdminMenuPage />} />
+        <Route path="/admin/inventory" element={<AdminInventoryPage />} />
+        <Route path="/admin/staff" element={<AdminStaffPage />} />
+        <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
         {/* Kitchen Flow */}
         <Route path="/kitchen" element={<Navigate to="/kitchen/login" replace />} />

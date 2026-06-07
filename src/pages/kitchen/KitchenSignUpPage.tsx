@@ -1,22 +1,43 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ChefHat } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const stations = ['Grill', 'Pastry', 'Beverages', 'Cold Kitchen', 'Hot Kitchen', 'Expediting'];
 
 export default function KitchenSignUpPage() {
   const [showPw, setShowPw] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [station, setStation] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!station) { setError('Please select your station'); return; }
+    if (password !== confirmPassword) { setError('Passwords do not match'); return; }
+    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    setLoading(true);
+    try {
+      await register({ name, email, password, role: 'kitchen', assignedStation: station });
+      navigate('/kitchen/kds');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registration failed. Try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex bg-warm-950">
-      {/* Left */}
       <div className="w-1/2 relative overflow-hidden">
-        <img
-          src="https://images.pexels.com/photos/2696064/pexels-photo-2696064.jpeg?auto=compress&cs=tinysrgb&w=1200"
-          alt="Kitchen"
-          className="w-full h-full object-cover"
-        />
+        <img src="https://images.pexels.com/photos/2696064/pexels-photo-2696064.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Kitchen" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-warm-950/80 to-warm-950/40" />
         <div className="absolute bottom-12 left-10 right-10">
           <div className="flex items-center gap-2 mb-6">
@@ -33,7 +54,6 @@ export default function KitchenSignUpPage() {
         </div>
       </div>
 
-      {/* Right */}
       <div className="w-1/2 flex items-center justify-center px-16 bg-warm-900">
         <div className="w-full max-w-md">
           <div className="mb-10">
@@ -47,19 +67,23 @@ export default function KitchenSignUpPage() {
             <p className="text-cream-muted mt-2 text-sm">Register to access the Kitchen Display System</p>
           </div>
 
-          <form className="space-y-4" onSubmit={e => e.preventDefault()}>
+          {error && (
+            <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded-xl text-red-400 text-sm">{error}</div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="block text-cream-muted text-xs font-medium mb-1.5 tracking-wide uppercase">Full Name</label>
-              <input type="text" placeholder="Anya Patel" className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm" />
+              <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Anya Patel" className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm" />
             </div>
             <div>
               <label className="block text-cream-muted text-xs font-medium mb-1.5 tracking-wide uppercase">Email Address</label>
-              <input type="email" placeholder="chef@kitchen.com" className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm" />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="chef@kitchen.com" className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm" />
             </div>
             <div>
               <label className="block text-cream-muted text-xs font-medium mb-1.5 tracking-wide uppercase">Password</label>
               <div className="relative">
-                <input type={showPw ? 'text' : 'password'} placeholder="Min 8 characters" className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 pr-11 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm" />
+                <input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder="Min 6 characters" className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 pr-11 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm" />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-warm-500 hover:text-cream-muted transition-colors">
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -67,33 +91,25 @@ export default function KitchenSignUpPage() {
             </div>
             <div>
               <label className="block text-cream-muted text-xs font-medium mb-1.5 tracking-wide uppercase">Confirm Password</label>
-              <input type="password" placeholder="Repeat password" className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm" />
+              <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="Repeat password" className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm" />
             </div>
             <div>
               <label className="block text-cream-muted text-xs font-medium mb-1.5 tracking-wide uppercase">Assigned Station</label>
               <div className="grid grid-cols-3 gap-2">
                 {stations.map(s => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setStation(s)}
+                  <button key={s} type="button" onClick={() => setStation(s)}
                     className={`py-2 px-3 rounded-xl text-xs font-medium transition-all border ${
-                      station === s
-                        ? 'bg-amber/10 text-amber border-amber/40'
-                        : 'bg-warm-800 text-cream-muted hover:text-cream border-warm-700'
-                    }`}
-                  >
+                      station === s ? 'bg-amber/10 text-amber border-amber/40' : 'bg-warm-800 text-cream-muted hover:text-cream border-warm-700'
+                    }`}>
                     {s}
                   </button>
                 ))}
               </div>
             </div>
-            <Link
-              to="/kitchen/kds"
-              className="block w-full text-center py-3.5 bg-amber hover:bg-amber-hover text-warm-950 font-semibold rounded-xl transition-colors duration-200 mt-4"
-            >
-              Join Kitchen
-            </Link>
+            <button type="submit" disabled={loading}
+              className="block w-full text-center py-3.5 bg-amber hover:bg-amber-hover text-warm-950 font-semibold rounded-xl transition-colors duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed">
+              {loading ? 'Joining Kitchen...' : 'Join Kitchen'}
+            </button>
           </form>
 
           <p className="text-center text-cream-muted text-sm mt-6">
