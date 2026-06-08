@@ -4,7 +4,7 @@ import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import API from '../../services/api';
 
-const CUISINES = ['French', 'Italian', 'Japanese', 'Indian', 'American', 'Mediterranean', 'Chinese', 'Mexican', 'Thai', 'Lebanese'];
+const CUISINES = ['French', 'Italian', 'Japanese', 'Indian', 'American', 'Mediterranean', 'Chinese', 'Mexican', 'Thai', 'Lebanese' , 'Rwandan', 'Ethiopian', 'Vietnamese', 'Korean', 'Spanish', 'Greek', 'Turkish', 'Moroccan', 'Caribbean', 'Brazilian', 'Peruvian', 'German', 'Russian', 'African', 'Fusion', 'Other'];
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 interface WorkingHour {
@@ -16,23 +16,24 @@ interface WorkingHour {
 
 export default function AdminSignUpPage() {
   const [showPw, setShowPw] = useState(false);
-  const [step, setStep] = useState(1); // step 1 = account, step 2 = restaurant details
+  const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  // Step 1 — Account info
+  // Step 1
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Step 2 — Restaurant info
+  // Step 2
   const [restaurantName, setRestaurantName] = useState('');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
+  const [coverImage, setCoverImage] = useState('');
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
   const [deliveryFee, setDeliveryFee] = useState('4.99');
   const [minimumOrder, setMinimumOrder] = useState('10');
@@ -67,23 +68,23 @@ export default function AdminSignUpPage() {
     setLoading(true);
 
     try {
-      // Register admin user
       await register({ name, email, password, role: 'admin', restaurantName });
-
-      // Create restaurant with full details
+      const token = localStorage.getItem('token');
       await API.post('/restaurants', {
         name: restaurantName,
         description,
         address,
         phone,
         cuisine: selectedCuisines,
+        images: coverImage ? [coverImage] : [],
         deliveryFee: parseFloat(deliveryFee),
         minimumOrder: parseFloat(minimumOrder),
         deliveryRadius: parseFloat(deliveryRadius),
         openingHours: workingHours,
         isActive: true,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-
       navigate('/admin/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Try again.');
@@ -110,8 +111,6 @@ export default function AdminSignUpPage() {
             "Excellence in every<br />detail, from kitchen<br />to table."
           </p>
           <p className="text-cream-muted text-sm mt-3">Manage your restaurant with precision</p>
-
-          {/* Step indicator */}
           <div className="mt-8 flex items-center gap-3">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step >= 1 ? 'bg-amber text-warm-950' : 'bg-warm-700 text-warm-400'}`}>1</div>
             <div className={`flex-1 h-0.5 ${step >= 2 ? 'bg-amber' : 'bg-warm-700'}`} />
@@ -132,7 +131,7 @@ export default function AdminSignUpPage() {
             <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded-xl text-red-400 text-sm">{error}</div>
           )}
 
-          {/* STEP 1 — Account Info */}
+          {/* STEP 1 */}
           {step === 1 && (
             <>
               <div className="mb-8">
@@ -178,7 +177,7 @@ export default function AdminSignUpPage() {
             </>
           )}
 
-          {/* STEP 2 — Restaurant Info */}
+          {/* STEP 2 */}
           {step === 2 && (
             <>
               <div className="mb-8">
@@ -206,6 +205,20 @@ export default function AdminSignUpPage() {
                     <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe your restaurant's atmosphere and specialty..." rows={3} className="w-full bg-warm-700 border border-warm-600 rounded-xl px-4 py-3 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm resize-none" />
                   </div>
                   <div>
+                    <label className="block text-cream-muted text-xs font-medium mb-1.5 tracking-wide uppercase">Cover Image URL</label>
+                    <input
+                      type="text"
+                      value={coverImage}
+                      onChange={e => setCoverImage(e.target.value)}
+                      placeholder="https://images.pexels.com/photos/..."
+                      className="w-full bg-warm-700 border border-warm-600 rounded-xl px-4 py-3 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm"
+                    />
+                    {coverImage && (
+                      <img src={coverImage} alt="Preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-warm-600" />
+                    )}
+                    <p className="text-warm-500 text-xs mt-1">Paste a Pexels or any image URL for your restaurant cover</p>
+                  </div>
+                  <div>
                     <label className="block text-cream-muted text-xs font-medium mb-1.5 tracking-wide uppercase">Phone Number</label>
                     <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+250 700 000 000" className="w-full bg-warm-700 border border-warm-600 rounded-xl px-4 py-3 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm" />
                   </div>
@@ -229,16 +242,10 @@ export default function AdminSignUpPage() {
                   <h3 className="text-cream font-medium text-sm uppercase tracking-wide mb-3">Cuisine Types</h3>
                   <div className="flex flex-wrap gap-2">
                     {CUISINES.map(cuisine => (
-                      <button
-                        key={cuisine}
-                        type="button"
-                        onClick={() => toggleCuisine(cuisine)}
+                      <button key={cuisine} type="button" onClick={() => toggleCuisine(cuisine)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                          selectedCuisines.includes(cuisine)
-                            ? 'bg-amber text-warm-950'
-                            : 'bg-warm-700 text-cream-muted hover:text-cream border border-warm-600'
-                        }`}
-                      >
+                          selectedCuisines.includes(cuisine) ? 'bg-amber text-warm-950' : 'bg-warm-700 text-cream-muted hover:text-cream border border-warm-600'
+                        }`}>
                         {cuisine}
                       </button>
                     ))}
@@ -271,30 +278,15 @@ export default function AdminSignUpPage() {
                           <span className="text-warm-500 text-sm flex-1">Closed</span>
                         ) : (
                           <div className="flex items-center gap-2 flex-1">
-                            <input
-                              type="time"
-                              value={hour.open}
-                              onChange={e => updateHour(i, 'open', e.target.value)}
-                              className="bg-warm-700 border border-warm-600 rounded-lg px-3 py-1.5 text-cream text-sm focus:outline-none focus:border-amber"
-                            />
+                            <input type="time" value={hour.open} onChange={e => updateHour(i, 'open', e.target.value)} className="bg-warm-700 border border-warm-600 rounded-lg px-3 py-1.5 text-cream text-sm focus:outline-none focus:border-amber" />
                             <span className="text-warm-500 text-xs">to</span>
-                            <input
-                              type="time"
-                              value={hour.close}
-                              onChange={e => updateHour(i, 'close', e.target.value)}
-                              className="bg-warm-700 border border-warm-600 rounded-lg px-3 py-1.5 text-cream text-sm focus:outline-none focus:border-amber"
-                            />
+                            <input type="time" value={hour.close} onChange={e => updateHour(i, 'close', e.target.value)} className="bg-warm-700 border border-warm-600 rounded-lg px-3 py-1.5 text-cream text-sm focus:outline-none focus:border-amber" />
                           </div>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => updateHour(i, 'closed', !hour.closed)}
+                        <button type="button" onClick={() => updateHour(i, 'closed', !hour.closed)}
                           className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex-shrink-0 ${
-                            hour.closed
-                              ? 'bg-warm-700 text-cream-muted hover:text-cream'
-                              : 'bg-red-900/30 text-red-400 hover:bg-red-900/50'
-                          }`}
-                        >
+                            hour.closed ? 'bg-warm-700 text-cream-muted hover:text-cream' : 'bg-red-900/30 text-red-400 hover:bg-red-900/50'
+                          }`}>
                           {hour.closed ? 'Open' : 'Close'}
                         </button>
                       </div>
@@ -302,11 +294,8 @@ export default function AdminSignUpPage() {
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-4 bg-amber hover:bg-amber-hover text-warm-950 font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                <button type="submit" disabled={loading}
+                  className="w-full py-4 bg-amber hover:bg-amber-hover text-warm-950 font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   {loading ? 'Creating Account & Restaurant...' : 'Complete Registration'}
                 </button>
               </form>
