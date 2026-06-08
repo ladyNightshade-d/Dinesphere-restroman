@@ -16,7 +16,9 @@ export default function AdminInventoryPage() {
     const fetchData = async () => {
       try {
         const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find((r: any) => r.owner === user?.id);
+        const myRestaurant = res.data.restaurants.find((r: any) => 
+  r.owner === user?.id || r.owner?._id === user?.id
+) || res.data.restaurants[0];
         if (myRestaurant) {
           setRestaurantId(myRestaurant._id);
           const inv = await API.get(`/inventory/${myRestaurant._id}`);
@@ -32,18 +34,30 @@ export default function AdminInventoryPage() {
   }, [user]);
 
   const handleAdd = async () => {
-    try {
-      const res = await API.post('/inventory', {
-        ...form,
-        restaurant: restaurantId,
-        currentStock: parseFloat(form.currentStock),
-        minimumStock: parseFloat(form.minimumStock),
-      });
-      setItems(prev => [...prev, res.data.item]);
-      setShowModal(false);
-      setForm({ ingredient: '', currentStock: '', unit: 'kg', minimumStock: '' });
-    } catch (err) { console.error(err); }
-  };
+  if (!restaurantId) {
+    alert('Restaurant not found. Please refresh the page.');
+    return;
+  }
+  if (!form.ingredient || !form.currentStock || !form.minimumStock) {
+    alert('Please fill all fields');
+    return;
+  }
+  try {
+    const res = await API.post('/inventory', {
+      ingredient: form.ingredient,
+      currentStock: parseFloat(form.currentStock),
+      minimumStock: parseFloat(form.minimumStock),
+      unit: form.unit,
+      restaurant: restaurantId,
+    });
+    setItems(prev => [...prev, res.data.item]);
+    setShowModal(false);
+    setForm({ ingredient: '', currentStock: '', unit: 'kg', minimumStock: '' });
+  } catch (err: any) {
+    console.error('Add ingredient error:', err.response?.data);
+    alert(err.response?.data?.message || 'Failed to add ingredient');
+  }
+};
 
   const handleUpdate = async (id: string, currentStock: number) => {
     try {
