@@ -20,7 +20,9 @@ export default function AdminMenuPage() {
     const fetchData = async () => {
       try {
         const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find((r: any) => r.owner === user?.id);
+        const myRestaurant = res.data.restaurants.find((r: any) => 
+  r.owner === user?.id || r.owner?._id === user?.id
+) || res.data.restaurants[0];
         if (myRestaurant) {
           setRestaurantId(myRestaurant._id);
           const menuRes = await API.get(`/menu/restaurant/${myRestaurant._id}`);

@@ -25,9 +25,9 @@ export default function AdminDashboard() {
       try {
         // Get admin's restaurant
         const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find(
-          (r: any) => r.owner === user?.id
-        );
+        const myRestaurant = res.data.restaurants.find((r: any) => 
+  r.owner === user?.id || r.owner?._id === user?.id
+) || res.data.restaurants[0];
         if (myRestaurant) {
           setRestaurantId(myRestaurant._id);
           fetchDashboard(myRestaurant._id);
