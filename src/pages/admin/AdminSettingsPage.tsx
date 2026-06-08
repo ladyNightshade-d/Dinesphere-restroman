@@ -595,7 +595,17 @@ export default function AdminSettingsPage() {
                         <p className="text-cream text-sm font-medium">Delete Admin Account</p>
                         <p className="text-warm-500 text-xs mt-0.5">Permanently delete your account and all data</p>
                       </div>
-                      <button className="flex-shrink-0 px-4 py-2 border border-red-700/50 text-red-400 hover:bg-red-900/30 rounded-xl text-sm font-semibold transition-colors">Delete</button>
+                      <button 
+  onClick={() => {
+    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.')) {
+      if (window.confirm('This is your final warning. Are you absolutely sure?')) {
+        alert('Account deletion requested. Please contact support to complete this process.');
+      }
+    }
+  }}
+  className="flex-shrink-0 px-4 py-2 border border-red-700/50 text-red-400 hover:bg-red-900/30 rounded-xl text-sm font-semibold transition-colors">
+  Delete
+</button>
                     </div>
                   </div>
                 </SectionCard>
