@@ -1,4 +1,0 @@
-[build]
-  base = "Dinesphere-restroman"
-  command = "npm run build"
-  publish = "Dinesphere-restroman/dist"
