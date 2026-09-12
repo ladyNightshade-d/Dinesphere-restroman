@@ -9,7 +9,7 @@ export default function KitchenLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,6 +20,7 @@ export default function KitchenLoginPage() {
       await login(email, password);
       const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
       if (savedUser.role !== 'kitchen') {
+        logout();
         setError('This account is not a kitchen staff account');
         return;
       }

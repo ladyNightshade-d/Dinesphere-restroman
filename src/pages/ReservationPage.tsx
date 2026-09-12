@@ -69,7 +69,8 @@ export default function ReservationPage() {
     setError('');
 
     try {
-      const date = new Date(viewYear, viewMonth, selectedDay).toISOString();
+      // Store the selected calendar date at UTC midnight so the date does not shift by timezone.
+      const date = new Date(Date.UTC(viewYear, viewMonth, selectedDay)).toISOString();
       const result = await reservationService.create({
         restaurant: id!,
         date,
