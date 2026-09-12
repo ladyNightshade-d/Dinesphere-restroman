@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 import DiscoverPage from './pages/DiscoverPage';
 import RestaurantMenuPage from './pages/RestaurantMenuPage';
 import CartPage from './pages/CartPage';
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/discover" element={<DiscoverPage />} />
         <Route path="/restaurant/:id" element={<RestaurantMenuPage />} />
         <Route path="/restaurant/:id/reserve" element={<ReservationPage />} />
