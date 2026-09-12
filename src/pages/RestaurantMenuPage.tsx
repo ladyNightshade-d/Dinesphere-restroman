@@ -22,6 +22,7 @@ export default function RestaurantMenuPage() {
   const [showMenu, setShowMenu] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,6 +39,7 @@ export default function RestaurantMenuPage() {
         if (cats.length > 0) setActiveCategory(cats[0]);
       } catch (err) {
         console.error('Failed to load restaurant', err);
+        setError('Failed to load this restaurant. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -77,6 +79,13 @@ export default function RestaurantMenuPage() {
         <div className="w-10 h-10 border-2 border-amber border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p className="text-cream-muted text-sm">Loading restaurant...</p>
       </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="bg-warm-950 min-h-screen pt-[72px] flex items-center justify-center">
+      <Navbar />
+      <p className="text-red-400 text-sm">{error}</p>
     </div>
   );
 

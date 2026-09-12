@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   UtensilsCrossed,
   LayoutDashboard,
@@ -21,6 +22,7 @@ const navItems = [
 
 export default function AdminSidebar() {
   const { pathname } = useLocation();
+  const { logout } = useAuth();
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-warm-900 border-r border-warm-700 flex flex-col z-40">
@@ -52,7 +54,7 @@ export default function AdminSidebar() {
       </nav>
 
       <div className="px-4 py-4 border-t border-warm-700">
-        <Link to="/admin/login" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-cream-muted hover:text-cream hover:bg-warm-750 transition-all duration-200">
+        <Link to="/admin/login" onClick={logout} className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-cream-muted hover:text-cream hover:bg-warm-750 transition-all duration-200">
           <LogOut size={17} />
           Sign Out
         </Link>

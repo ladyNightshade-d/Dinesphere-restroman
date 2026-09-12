@@ -19,6 +19,7 @@ import AdminMenuPage from './pages/admin/AdminMenuPage';
 import AdminInventoryPage from './pages/admin/AdminInventoryPage';
 import AdminStaffPage from './pages/admin/AdminStaffPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
   return (
@@ -32,25 +33,25 @@ export default function App() {
         <Route path="/discover" element={<DiscoverPage />} />
         <Route path="/restaurant/:id" element={<RestaurantMenuPage />} />
         <Route path="/restaurant/:id/reserve" element={<ReservationPage />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/order-tracking" element={<OrderTrackingPage />} />
+        <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+        <Route path="/order-tracking" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
 
         {/* Admin Flow */}
         <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/signup" element={<AdminSignUpPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/orders" element={<AdminOrdersPage />} />
-        <Route path="/admin/menu" element={<AdminMenuPage />} />
-        <Route path="/admin/inventory" element={<AdminInventoryPage />} />
-        <Route path="/admin/staff" element={<AdminStaffPage />} />
-        <Route path="/admin/settings" element={<AdminSettingsPage />} />
+        <Route path="/admin/dashboard" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/orders" element={<ProtectedRoute roles={['admin']}><AdminOrdersPage /></ProtectedRoute>} />
+        <Route path="/admin/menu" element={<ProtectedRoute roles={['admin']}><AdminMenuPage /></ProtectedRoute>} />
+        <Route path="/admin/inventory" element={<ProtectedRoute roles={['admin']}><AdminInventoryPage /></ProtectedRoute>} />
+        <Route path="/admin/staff" element={<ProtectedRoute roles={['admin']}><AdminStaffPage /></ProtectedRoute>} />
+        <Route path="/admin/settings" element={<ProtectedRoute roles={['admin']}><AdminSettingsPage /></ProtectedRoute>} />
 
         {/* Kitchen Flow */}
         <Route path="/kitchen" element={<Navigate to="/kitchen/login" replace />} />
         <Route path="/kitchen/signup" element={<KitchenSignUpPage />} />
         <Route path="/kitchen/login" element={<KitchenLoginPage />} />
-        <Route path="/kitchen/kds" element={<KitchenDisplayScreen />} />
+        <Route path="/kitchen/kds" element={<ProtectedRoute roles={['kitchen', 'admin']}><KitchenDisplayScreen /></ProtectedRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

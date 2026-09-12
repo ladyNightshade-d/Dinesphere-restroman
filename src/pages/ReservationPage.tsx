@@ -38,6 +38,7 @@ export default function ReservationPage() {
     if (id) {
       restaurantService.getById(id)
         .then(setRestaurant)
+        .catch(() => setError('Failed to load this restaurant. Please try again.'))
         .finally(() => setLoading(false));
     }
   }, [id]);

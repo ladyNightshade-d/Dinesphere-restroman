@@ -29,6 +29,7 @@ export default function OrderTrackingPage() {
 
   const [order, setOrder] = useState<any>(state?.order || null);
   const [loading, setLoading] = useState(!state?.order);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!state?.orderId) {
@@ -38,7 +39,10 @@ export default function OrderTrackingPage() {
 
     // Fetch order if not passed via state
     if (!state?.order) {
-      orderService.getOrder(state.orderId).then(setOrder).finally(() => setLoading(false));
+      orderService.getOrder(state.orderId)
+        .then(setOrder)
+        .catch(() => setError('Failed to load this order. Please try again.'))
+        .finally(() => setLoading(false));
     }
 
     // Connect socket and join order tracking room
@@ -76,7 +80,7 @@ export default function OrderTrackingPage() {
   if (!order) return (
     <div className="bg-warm-950 min-h-screen pt-[72px] flex items-center justify-center">
       <Navbar />
-      <p className="text-cream-muted">Order not found</p>
+      <p className={error ? 'text-red-400' : 'text-cream-muted'}>{error || 'Order not found'}</p>
     </div>
   );
 
