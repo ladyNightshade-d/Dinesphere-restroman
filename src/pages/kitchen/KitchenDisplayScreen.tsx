@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { UtensilsCrossed, Monitor } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { socketService } from '../../services/socket.service';
+import { KitchenOrder, OrderStatusUpdate, socketService } from '../../services/socket.service';
 import API from '../../services/api';
 
 type OrderStatus = 'NEW' | 'PREPARING' | 'READY';
@@ -14,7 +14,7 @@ interface KDSOrder {
   createdAt: string;
   placedAt: number;
   status: OrderStatus;
-  customer?: { name: string };
+  customer?: { name?: string };
   items: { name: string; quantity: number; specialNotes?: string }[];
 }
 
@@ -145,7 +145,7 @@ export default function KitchenDisplayScreen() {
         setRestaurantId(restaurant._id);
 
         const ordersRes = await API.get(`/kitchen/orders/${restaurant._id}`);
-        const mapped = ordersRes.data.orders.map((o: any) => ({
+        const mapped = ordersRes.data.orders.map((o: KitchenOrder) => ({
           ...o,
           status: backendToKDS[o.status] || 'NEW',
           placedAt: new Date(o.createdAt).getTime(),
@@ -157,7 +157,7 @@ export default function KitchenDisplayScreen() {
         socketService.joinKitchen(restaurant._id);
 
         // Listen for new orders in real time
-        socketService.onNewOrder((newOrder: any) => {
+        socketService.onNewOrder((newOrder: KitchenOrder) => {
           setOrders(prev => [{
   _id: newOrder._id,
   type: newOrder.orderType,
@@ -172,7 +172,7 @@ export default function KitchenDisplayScreen() {
         });
 
         // Listen for status updates
-        socketService.onOrderStatusUpdate(({ orderId, status }: any) => {
+        socketService.onOrderStatusUpdate(({ orderId, status }: OrderStatusUpdate) => {
           setOrders(prev => prev.map(o =>
             o._id === orderId ? { ...o, status: backendToKDS[status] || o.status } : o
           ));

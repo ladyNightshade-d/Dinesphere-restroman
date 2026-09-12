@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Star, Clock, MapPin, ShoppingCart, Plus, Minus, Utensils, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { restaurantService } from '../services/restaurant.service';
+import { MenuItem, Restaurant } from '../types/domain';
 
 interface CartItem {
   id: string;
@@ -15,8 +16,8 @@ interface CartItem {
 
 export default function RestaurantMenuPage() {
   const { id } = useParams();
-  const [restaurant, setRestaurant] = useState<any>(null);
-  const [menu, setMenu] = useState<any>({});
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [menu, setMenu] = useState<Record<string, MenuItem[]>>({});
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState('');
   const [showMenu, setShowMenu] = useState(false);
@@ -47,7 +48,7 @@ export default function RestaurantMenuPage() {
     if (id) fetchData();
   }, [id]);
 
-  const addToCart = (item: any) => {
+  const addToCart = (item: MenuItem) => {
     setCart(prev => {
       const existing = prev.find(c => c.id === item._id);
       if (existing) return prev.map(c => c.id === item._id ? { ...c, qty: c.qty + 1 } : c);
@@ -183,7 +184,7 @@ export default function RestaurantMenuPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-5">
-                {visibleItems.map((item: any) => (
+                {visibleItems.map((item: MenuItem) => (
                   <div key={item._id} className="flex gap-4 bg-warm-800 border border-warm-700 rounded-xl p-4 hover:border-amber/30 transition-colors group">
                     <div className="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden">
                       <img

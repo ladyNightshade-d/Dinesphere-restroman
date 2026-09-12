@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ChefHat } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { getApiErrorMessage } from '../../services/apiError';
 
 export default function KitchenLoginPage() {
   const [showPw, setShowPw] = useState(false);
@@ -25,8 +26,8 @@ export default function KitchenLoginPage() {
         return;
       }
       navigate('/kitchen/kds');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid email or password');
+    } catch (error) {
+      setError(getApiErrorMessage(error, 'Invalid email or password'));
     } finally {
       setLoading(false);
     }

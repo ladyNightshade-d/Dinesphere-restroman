@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ChefHat } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { getApiErrorMessage } from '../../services/apiError';
 
 const stations = ['Grill', 'Pastry', 'Beverages', 'Cold Kitchen', 'Hot Kitchen', 'Expediting'];
 
@@ -27,8 +28,8 @@ export default function KitchenSignUpPage() {
     try {
       await register({ name, email, password, role: 'kitchen', assignedStation: station });
       navigate('/kitchen/kds');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Try again.');
+    } catch (error) {
+      setError(getApiErrorMessage(error, 'Registration failed. Try again.'));
     } finally {
       setLoading(false);
     }

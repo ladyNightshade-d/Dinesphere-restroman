@@ -3,10 +3,11 @@ import AdminSidebar from '../../components/AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 import API from '../../services/api';
 import { Plus, X, AlertTriangle } from 'lucide-react';
+import { InventoryItem, Restaurant } from '../../types/domain';
 
 export default function AdminInventoryPage() {
   const { user } = useAuth();
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [restaurantId, setRestaurantId] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -16,8 +17,8 @@ export default function AdminInventoryPage() {
     const fetchData = async () => {
       try {
         const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find((r: any) => 
-  r.owner === user?.id || r.owner?._id === user?.id
+        const myRestaurant = res.data.restaurants.find((r: Restaurant) => 
+  (typeof r.owner === 'string' ? r.owner : r.owner?._id) === user?.id
 ) || res.data.restaurants[0];
         if (myRestaurant) {
           setRestaurantId(myRestaurant._id);
@@ -53,9 +54,9 @@ export default function AdminInventoryPage() {
     setItems(prev => [...prev, res.data.item]);
     setShowModal(false);
     setForm({ ingredient: '', currentStock: '', unit: 'kg', minimumStock: '' });
-  } catch (err: any) {
-    console.error('Add ingredient error:', err.response?.data);
-    alert(err.response?.data?.message || 'Failed to add ingredient');
+  } catch (error) {
+    console.error('Add ingredient error:', error);
+    alert('Failed to add ingredient');
   }
 };
 
@@ -115,7 +116,7 @@ export default function AdminInventoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item: any) => {
+                  {items.map(item => {
                     const isLow = item.currentStock <= item.minimumStock;
                     const pct = Math.min(100, (item.currentStock / (item.minimumStock * 2)) * 100);
                     return (

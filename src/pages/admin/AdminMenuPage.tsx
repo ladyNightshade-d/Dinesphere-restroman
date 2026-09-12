@@ -3,25 +3,26 @@ import AdminSidebar from '../../components/AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 import API from '../../services/api';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { MenuItem, Restaurant } from '../../types/domain';
 
 const CATEGORIES = ['Starters', 'Mains', 'Desserts', 'Drinks'];
 
 export default function AdminMenuPage() {
   const { user } = useAuth();
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [restaurantId, setRestaurantId] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<MenuItem | null>(null);
   const [form, setForm] = useState({ name: '', description: '', category: 'Starters', price: '', image: '', isAvailable: true });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find((r: any) => 
-  r.owner === user?.id || r.owner?._id === user?.id
+        const myRestaurant = res.data.restaurants.find((r: Restaurant) => 
+  (typeof r.owner === 'string' ? r.owner : r.owner?._id) === user?.id
 ) || res.data.restaurants[0];
         if (myRestaurant) {
           setRestaurantId(myRestaurant._id);
@@ -43,19 +44,19 @@ export default function AdminMenuPage() {
     setShowModal(true);
   };
 
-  const openEdit = (item: any) => {
+  const openEdit = (item: MenuItem) => {
     setEditing(item);
-    setForm({ name: item.name, description: item.description, category: item.category, price: item.price, image: item.image || '', isAvailable: item.isAvailable });
+    setForm({ name: item.name, description: item.description || '', category: item.category, price: String(item.price), image: item.image || '', isAvailable: item.isAvailable ?? true });
     setShowModal(true);
   };
 
   const handleSave = async () => {
     try {
       if (editing) {
-        const res = await API.put(`/menu/${editing._id}`, { ...form, price: parseFloat(form.price as any) });
+        const res = await API.put(`/menu/${editing._id}`, { ...form, price: parseFloat(form.price) });
         setItems(prev => prev.map(i => i._id === editing._id ? res.data.item : i));
       } else {
-        const res = await API.post('/menu', { ...form, price: parseFloat(form.price as any), restaurant: restaurantId });
+        const res = await API.post('/menu', { ...form, price: parseFloat(form.price), restaurant: restaurantId });
         setItems(prev => [...prev, res.data.item]);
       }
       setShowModal(false);
@@ -107,7 +108,7 @@ export default function AdminMenuPage() {
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-5">
-              {filtered.map((item: any) => (
+              {filtered.map(item => (
                 <div key={item._id} className="bg-warm-900 border border-warm-700 rounded-2xl overflow-hidden hover:border-amber/30 transition-colors">
                   <div className="aspect-video overflow-hidden">
                     <img src={item.image || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg'} alt={item.name} className="w-full h-full object-cover" />

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UtensilsCrossed, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getApiErrorMessage } from '../services/apiError';
 
 const googleSignInUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`;
 
@@ -32,8 +33,8 @@ export default function SignUpPage() {
     try {
       await register({ name, email, password, role: 'customer' });
       navigate('/discover');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Try again.');
+    } catch (error) {
+      setError(getApiErrorMessage(error, 'Registration failed. Try again.'));
     } finally {
       setLoading(false);
     }

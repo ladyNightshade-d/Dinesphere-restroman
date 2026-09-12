@@ -3,6 +3,7 @@ import AdminSidebar from '../../components/AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 import API from '../../services/api';
 import { orderService } from '../../services/order.service';
+import { OrderRecord, Restaurant } from '../../types/domain';
 
 const statusColor: Record<string, string> = {
   placed: 'bg-yellow-900/60 text-yellow-300',
@@ -18,7 +19,7 @@ const statusOptions = ['placed', 'confirmed', 'preparing', 'quality_check', 'out
 
 export default function AdminOrdersPage() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [, setRestaurantId] = useState('');
@@ -27,8 +28,8 @@ export default function AdminOrdersPage() {
     const fetchData = async () => {
       try {
         const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find((r: any) => 
-  r.owner === user?.id || r.owner?._id === user?.id
+        const myRestaurant = res.data.restaurants.find((r: Restaurant) => 
+  (typeof r.owner === 'string' ? r.owner : r.owner?._id) === user?.id
 ) || res.data.restaurants[0];
         if (myRestaurant) {
           setRestaurantId(myRestaurant._id);
@@ -99,12 +100,12 @@ export default function AdminOrdersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((order: any) => (
+                  {filtered.map(order => (
                     <tr key={order._id} className="border-b border-warm-700/50 hover:bg-warm-750/30 transition-colors">
                       <td className="px-5 py-4 text-amber text-sm font-medium">#{order._id?.slice(-6).toUpperCase()}</td>
                       <td className="px-5 py-4 text-cream text-sm">{order.customer?.name || 'Guest'}</td>
                       <td className="px-5 py-4 text-cream-muted text-xs max-w-[150px] truncate">
-                        {order.items?.map((i: any) => i.name).join(', ')}
+                        {order.items?.map(i => i.name).join(', ')}
                       </td>
                       <td className="px-5 py-4 text-cream text-sm font-medium">${order.totalAmount?.toFixed(2)}</td>
                       <td className="px-5 py-4">

@@ -3,6 +3,7 @@ import { Bell, TrendingUp, ShoppingBag, Users, AlertCircle } from 'lucide-react'
 import AdminSidebar from '../../components/AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 import API from '../../services/api';
+import { DashboardStats, Restaurant } from '../../types/domain';
 
 const statusColor: Record<string, string> = {
   placed: 'bg-yellow-900/60 text-yellow-300',
@@ -16,7 +17,7 @@ const statusColor: Record<string, string> = {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [, setRestaurantId] = useState<string>('');
 
@@ -25,8 +26,8 @@ export default function AdminDashboard() {
       try {
         // Get admin's restaurant
         const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find((r: any) => 
-  r.owner === user?.id || r.owner?._id === user?.id
+          const myRestaurant = res.data.restaurants.find((r: Restaurant) => 
+        (typeof r.owner === 'string' ? r.owner : r.owner?._id) === user?.id
 ) || res.data.restaurants[0];
         if (myRestaurant) {
           setRestaurantId(myRestaurant._id);
@@ -53,7 +54,7 @@ export default function AdminDashboard() {
   }, [user]);
 
   const maxRevenue = stats?.salesChart
-    ? Math.max(...stats.salesChart.map((d: any) => d.revenue), 1)
+    ? Math.max(...stats.salesChart.map(d => d.revenue), 1)
     : 1;
 
   const today = new Date().toLocaleDateString('en-US', {
@@ -88,7 +89,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-4">
             <button className="relative w-10 h-10 flex items-center justify-center rounded-full bg-warm-800 hover:bg-warm-750 text-cream-muted hover:text-cream transition-colors border border-warm-700">
               <Bell size={18} />
-              {stats?.stats?.pendingOrders > 0 && (
+              {(stats?.stats?.pendingOrders || 0) > 0 && (
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber rounded-full" />
               )}
             </button>
@@ -130,12 +131,12 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-display text-xl text-cream">Revenue — Past 7 Days</h2>
                 <span className="text-amber text-sm font-medium">
-                  ${stats?.salesChart?.reduce((s: number, d: any) => s + d.revenue, 0).toFixed(2) || '0.00'} total
+                  ${stats?.salesChart?.reduce((s, d) => s + d.revenue, 0).toFixed(2) || '0.00'} total
                 </span>
               </div>
-              {stats?.salesChart?.length > 0 ? (
+              {(stats?.salesChart?.length || 0) > 0 ? (
                 <div className="flex items-end gap-3 h-44">
-                  {stats.salesChart.map((day: any, i: number) => {
+                  {stats?.salesChart?.map((day, i) => {
                     const h = Math.max((day.revenue / maxRevenue) * 100, 2);
                     const isMax = day.revenue === maxRevenue;
                     return (
@@ -159,9 +160,9 @@ export default function AdminDashboard() {
             {/* Inventory */}
             <div className="bg-warm-900 border border-warm-700 rounded-2xl p-6">
               <h2 className="font-display text-xl text-cream mb-5">Inventory Alerts</h2>
-              {stats?.lowStockItems?.length > 0 ? (
+              {(stats?.lowStockItems?.length || 0) > 0 ? (
                 <div className="space-y-3">
-                  {stats.lowStockItems.map((item: any, i: number) => {
+                  {stats?.lowStockItems?.map((item, i) => {
                     const pct = Math.min(100, (item.currentStock / (item.minimumStock * 2)) * 100);
                     return (
                       <div key={i}>
@@ -195,7 +196,7 @@ export default function AdminDashboard() {
                 <h2 className="font-display text-xl text-cream">Recent Orders</h2>
                 <span className="text-cream-muted text-xs">{stats?.recentOrders?.length || 0} orders</span>
               </div>
-              {stats?.recentOrders?.length > 0 ? (
+              {(stats?.recentOrders?.length || 0) > 0 ? (
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-warm-700">
@@ -205,12 +206,12 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {stats.recentOrders.map((order: any, i: number) => (
+                    {stats?.recentOrders?.map((order, i) => (
                       <tr key={i} className="border-b border-warm-700/50 hover:bg-warm-750/30 transition-colors">
                         <td className="px-5 py-4 text-amber text-sm font-medium">#{order._id?.slice(-6).toUpperCase()}</td>
                         <td className="px-5 py-4 text-cream text-sm">{order.customer?.name || 'Guest'}</td>
                         <td className="px-5 py-4 text-cream-muted text-xs max-w-[180px] truncate">
-                          {order.items?.map((item: any) => item.name).join(', ')}
+                          {order.items?.map(item => item.name).join(', ')}
                         </td>
                         <td className="px-5 py-4 text-cream text-sm font-medium">${order.totalAmount?.toFixed(2)}</td>
                         <td className="px-5 py-4">
@@ -237,9 +238,9 @@ export default function AdminDashboard() {
               <div className="px-6 py-5 border-b border-warm-700">
                 <h2 className="font-display text-xl text-cream">Kitchen Staff</h2>
               </div>
-              {stats?.staff?.length > 0 ? (
+              {(stats?.staff?.length || 0) > 0 ? (
                 <div className="divide-y divide-warm-700/50">
-                  {stats.staff.map((s: any, i: number) => (
+                  {stats?.staff?.map((s, i) => (
                     <div key={i} className="px-5 py-4 hover:bg-warm-750/30 transition-colors">
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="text-cream text-sm font-medium">{s.name}</span>

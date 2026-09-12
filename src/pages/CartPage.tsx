@@ -4,6 +4,7 @@ import { Minus, Plus, Trash2, ArrowRight } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { orderService } from '../services/order.service';
 import { useAuth } from '../context/AuthContext';
+import { getApiErrorMessage } from '../services/apiError';
 
 interface CartItem {
   id: string;
@@ -88,8 +89,8 @@ export default function CartPage() {
       });
 
       navigate('/order-tracking', { state: { orderId: order._id, order } });
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to place order. Try again.');
+    } catch (error) {
+      setError(getApiErrorMessage(error, 'Failed to place order. Try again.'));
     } finally {
       setLoading(false);
     }

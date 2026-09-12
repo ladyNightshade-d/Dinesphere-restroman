@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import API from '../../services/api';
+import { getApiErrorMessage } from '../../services/apiError';
 
 const CUISINES = ['French', 'Italian', 'Japanese', 'Indian', 'American', 'Mediterranean', 'Chinese', 'Mexican', 'Thai', 'Lebanese' , 'Rwandan', 'Ethiopian', 'Vietnamese', 'Korean', 'Spanish', 'Greek', 'Turkish', 'Moroccan', 'Caribbean', 'Brazilian', 'Peruvian', 'German', 'Russian', 'African', 'Fusion', 'Other'];
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -86,8 +87,8 @@ export default function AdminSignUpPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       navigate('/admin/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Try again.');
+    } catch (error) {
+      setError(getApiErrorMessage(error, 'Registration failed. Try again.'));
     } finally {
       setLoading(false);
     }

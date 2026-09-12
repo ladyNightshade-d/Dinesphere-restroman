@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { UtensilsCrossed, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getApiErrorMessage } from '../services/apiError';
 
 const googleSignInUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`;
 
@@ -23,8 +24,8 @@ export default function LoginPage() {
     try {
       await login(email, password);
       navigate('/discover');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid email or password');
+    } catch (error) {
+      setError(getApiErrorMessage(error, 'Invalid email or password'));
     } finally {
       setLoading(false);
     }

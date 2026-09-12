@@ -4,6 +4,7 @@ import { CheckCircle2, Clock, ChefHat, Bike, Home, Star, LucideIcon } from 'luci
 import Navbar from '../components/Navbar';
 import { orderService } from '../services/order.service';
 import { socketService } from '../services/socket.service';
+import { OrderRecord } from '../types/domain';
 
 interface StepConfig {
   label: string;
@@ -25,9 +26,9 @@ const statusOrder = ['placed', 'confirmed', 'preparing', 'quality_check', 'out_f
 export default function OrderTrackingPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state as { orderId?: string; order?: any };
+  const state = location.state as { orderId?: string; order?: OrderRecord };
 
-  const [order, setOrder] = useState<any>(state?.order || null);
+  const [order, setOrder] = useState<OrderRecord | null>(state?.order || null);
   const [loading, setLoading] = useState(!state?.order);
   const [error, setError] = useState('');
 
@@ -52,7 +53,7 @@ export default function OrderTrackingPage() {
     // Listen for real-time status updates
     socketService.onOrderStatusUpdate(({ orderId, status }) => {
       if (orderId === state.orderId) {
-        setOrder((prev: any) => prev ? { ...prev, status } : prev);
+        setOrder(prev => prev ? { ...prev, status } : prev);
       }
     });
 
@@ -61,8 +62,8 @@ export default function OrderTrackingPage() {
 
   const currentStatusIndex = statusOrder.indexOf(order?.status || 'placed');
 
-  const getStepTime = (statusHistory: any[], status: string) => {
-    const entry = statusHistory?.find((h: any) => h.status === status);
+  const getStepTime = (statusHistory: OrderRecord['statusHistory'], status: string) => {
+    const entry = statusHistory?.find(h => h.status === status);
     if (!entry) return '—';
     return new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
@@ -102,7 +103,7 @@ export default function OrderTrackingPage() {
             Order #{order._id?.slice(-6).toUpperCase()}
           </h1>
           <p className="text-cream-muted">
-            {order.restaurant?.name || 'Restaurant'} · Placed at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {(typeof order.restaurant === 'string' ? 'Restaurant' : order.restaurant?.name) || 'Restaurant'} · Placed at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
 
@@ -172,7 +173,7 @@ export default function OrderTrackingPage() {
             <div className="bg-warm-900 border border-warm-700 rounded-2xl p-6">
               <h3 className="font-display text-xl text-cream mb-5">Your Order</h3>
               <div className="space-y-4 mb-5">
-                {order.items?.map((item: any, i: number) => (
+                {order.items?.map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg bg-warm-800 flex items-center justify-center flex-shrink-0">
                       <ChefHat size={20} className="text-warm-500" />
@@ -182,7 +183,7 @@ export default function OrderTrackingPage() {
                       <p className="text-cream-muted text-xs">×{item.quantity} · {item.size}</p>
                     </div>
                     <span className="text-amber text-sm font-medium">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ${((item.price || 0) * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}

@@ -8,6 +8,12 @@ export interface OrderStatusUpdate {
 export interface KitchenOrder {
   _id: string;
   status: string;
+  type?: string;
+  orderType: string;
+  tableNumber?: string;
+  createdAt: string;
+  customer?: { name?: string };
+  items: { name: string; quantity: number; specialNotes?: string }[];
   [key: string]: unknown;
 }
 

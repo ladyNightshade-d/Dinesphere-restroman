@@ -5,6 +5,8 @@ import Navbar from '../components/Navbar';
 import { restaurantService } from '../services/restaurant.service';
 import { reservationService } from '../services/reservation.service';
 import { useAuth } from '../context/AuthContext';
+import { getApiErrorMessage } from '../services/apiError';
+import { Restaurant, ReservationRecord } from '../types/domain';
 
 const timeSlots = [
   '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
@@ -20,11 +22,11 @@ export default function ReservationPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [restaurant, setRestaurant] = useState<any>(null);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [reservation, setReservation] = useState<any>(null);
+  const [reservation, setReservation] = useState<ReservationRecord | null>(null);
 
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -79,8 +81,8 @@ export default function ReservationPage() {
         specialRequests: notes,
       });
       setReservation(result);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to make reservation. Try again.');
+    } catch (error) {
+      setError(getApiErrorMessage(error, 'Failed to make reservation. Try again.'));
     } finally {
       setSubmitting(false);
     }

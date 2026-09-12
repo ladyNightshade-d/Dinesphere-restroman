@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import AdminSidebar from '../../components/AdminSidebar';
 import API from '../../services/api';
 import { Users } from 'lucide-react';
+import { StaffMember } from '../../types/domain';
 
 export default function AdminStaffPage() {
-  const [staff, setStaff] = useState<any[]>([]);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function AdminStaffPage() {
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-5">
-              {staff.map((s: any) => (
+              {staff.map(s => (
                 <div key={s._id} className="bg-warm-900 border border-warm-700 rounded-2xl p-6 hover:border-amber/30 transition-colors">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 rounded-full bg-amber/20 border border-amber/30 flex items-center justify-center">

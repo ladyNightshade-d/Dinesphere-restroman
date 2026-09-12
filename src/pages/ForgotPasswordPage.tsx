@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, KeyRound, LockKeyhole, Mail } from 'lucide-react';
 import { authService } from '../services/auth.service';
+import { getApiErrorMessage } from '../services/apiError';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -39,8 +40,8 @@ export default function ForgotPasswordPage() {
         setPassword('');
         setConfirmPassword('');
       }
-    } catch (err: any) {
-      setError(err.message || err.response?.data?.message || 'Unable to complete password reset.');
+    } catch (error) {
+      setError(getApiErrorMessage(error, 'Unable to complete password reset.'));
     } finally {
       setLoading(false);
     }

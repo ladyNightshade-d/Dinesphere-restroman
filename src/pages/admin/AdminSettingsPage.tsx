@@ -9,6 +9,8 @@ import {
 import AdminSidebar from '../../components/AdminSidebar';
 import { useAuth } from '../../context/AuthContext';
 import API from '../../services/api';
+import { getApiErrorMessage } from '../../services/apiError';
+import { Restaurant } from '../../types/domain';
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return <div className="bg-warm-900 border border-warm-700 rounded-2xl overflow-hidden">{children}</div>;
@@ -160,7 +162,7 @@ export default function AdminSettingsPage() {
       try {
         const res = await API.get('/restaurants');
         const myRestaurant = res.data.restaurants.find(
-          (r: any) => r.owner === user?.id || r.owner?._id === user?.id
+          (r: Restaurant) => (typeof r.owner === 'string' ? r.owner : r.owner?._id) === user?.id
         ) || res.data.restaurants[0];
         if (myRestaurant) {
           setRestaurantId(myRestaurant._id);
@@ -261,8 +263,8 @@ export default function AdminSettingsPage() {
       setConfirmNewPassword('');
       showSaved('password');
       showSuccess('Password updated successfully!');
-    } catch (err: any) {
-      showError(err.response?.data?.message || 'Failed to change password');
+    } catch (error) {
+      showError(getApiErrorMessage(error, 'Failed to change password'));
     }
   };
 
