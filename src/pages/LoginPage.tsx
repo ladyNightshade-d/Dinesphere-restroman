@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { UtensilsCrossed, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const resetMessage = (location.state as { message?: string } | null)?.message;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +89,9 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+          {resetMessage && (
+            <div className="mb-4 p-3 bg-green-900/30 border border-green-700 rounded-xl text-green-300 text-sm">{resetMessage}</div>
+          )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
@@ -117,9 +122,9 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="flex justify-end">
-              <button type="button" className="text-amber text-xs hover:text-amber-light transition-colors">
+              <Link to="/forgot-password" className="text-amber text-xs hover:text-amber-light transition-colors">
                 Forgot password?
-              </button>
+              </Link>
             </div>
             <button
               type="submit"
