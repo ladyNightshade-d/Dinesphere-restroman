@@ -21,7 +21,7 @@ export default function DiscoverPage() {
         setLoading(true);
         const data = await restaurantService.getAll();
         setRestaurants(data);
-      } catch (err) {
+      } catch {
         setError('Failed to load restaurants');
       } finally {
         setLoading(false);

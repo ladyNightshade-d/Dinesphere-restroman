@@ -53,7 +53,7 @@ export default function OrderTrackingPage() {
     });
 
     return () => socketService.disconnect();
-  }, [state?.orderId]);
+  }, [navigate, state?.order, state?.orderId]);
 
   const currentStatusIndex = statusOrder.indexOf(order?.status || 'placed');
 

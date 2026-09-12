@@ -19,6 +19,8 @@ export interface PlaceOrderData {
   specialInstructions?: string;
 }
 
+export type OrderFilters = Record<string, string | number | boolean | undefined>;
+
 export const orderService = {
   placeOrder: async (data: PlaceOrderData) => {
     const res = await API.post('/orders', data);
@@ -35,7 +37,7 @@ export const orderService = {
     return res.data.order;
   },
 
-  getRestaurantOrders: async (restaurantId: string, filters?: any) => {
+  getRestaurantOrders: async (restaurantId: string, filters?: OrderFilters) => {
     const res = await API.get(`/orders/restaurant/${restaurantId}`, { params: filters });
     return res.data.orders;
   },

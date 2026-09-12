@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService } from '../services/auth.service';
+import { authService, RegisterData } from '../services/auth.service';
 
 interface User {
   id: string;
@@ -14,7 +14,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   isLoggedIn: boolean;
 }
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(data.user);
   };
 
-  const register = async (formData: any) => {
+  const register = async (formData: RegisterData) => {
     const data = await authService.register(formData);
     setUser(data.user);
   };

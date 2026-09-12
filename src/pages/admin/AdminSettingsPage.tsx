@@ -212,7 +212,7 @@ export default function AdminSettingsPage() {
       });
       showSaved('restaurant');
       showSuccess('Restaurant details updated successfully!');
-    } catch (err) {
+    } catch {
       showError('Failed to save restaurant details');
     }
   };
@@ -224,7 +224,7 @@ export default function AdminSettingsPage() {
       });
       showSaved('hours');
       showSuccess('Hours updated!');
-    } catch (err) {
+    } catch {
       showError('Failed to save hours');
     }
   };
@@ -236,7 +236,7 @@ export default function AdminSettingsPage() {
       });
       showSaved('cover');
       showSuccess('Cover image updated!');
-    } catch (err) {
+    } catch {
       showError('Failed to update cover image');
     }
   };
