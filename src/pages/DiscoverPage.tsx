@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, MapPin, Star, ChevronDown } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { restaurantService } from '../services/restaurant.service';
+import { Restaurant } from '../types/domain';
 
 const cuisines = ['All', 'American', 'Indian', 'French', 'Japanese', 'Italian', 'Mediterranean'];
 const ratings = ['Any', '4.5+', '4.7+', '4.9+'];
@@ -11,7 +12,7 @@ export default function DiscoverPage() {
   const [activeCuisine, setActiveCuisine] = useState('All');
   const [activeRating, setActiveRating] = useState('Any');
   const [search, setSearch] = useState('');
-  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -34,9 +35,9 @@ export default function DiscoverPage() {
     const matchCuisine = activeCuisine === 'All' || r.cuisine?.includes(activeCuisine);
     const matchRating =
       activeRating === 'Any' ? true :
-      activeRating === '4.5+' ? r.rating >= 4.5 :
-      activeRating === '4.7+' ? r.rating >= 4.7 :
-      r.rating >= 4.9;
+      activeRating === '4.5+' ? (r.rating || 0) >= 4.5 :
+      activeRating === '4.7+' ? (r.rating || 0) >= 4.7 :
+      (r.rating || 0) >= 4.9;
     const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
       r.cuisine?.toString().toLowerCase().includes(search.toLowerCase());
     return matchCuisine && matchRating && matchSearch;

@@ -132,19 +132,16 @@ export default function KitchenDisplayScreen() {
   const [orders, setOrders] = useState<KDSOrder[]>([]);
   const [filter, setFilter] = useState<'All' | 'Dine-In' | 'Online'>('All');
   const [time, setTime] = useState(new Date());
-  const [, setRestaurantId] = useState('');
+  const [restaurantId, setRestaurantId] = useState(user?.restaurantId || '');
+  const [restaurants, setRestaurants] = useState<{ _id: string; name: string }[]>([]);
+  const [assigning, setAssigning] = useState(false);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchOrders = async (rid: string) => {
       try {
-        // Get all restaurants and find one to display orders for
-        const res = await API.get('/restaurants');
-        const restaurant = res.data.restaurants[0];
-        if (!restaurant) { setLoading(false); return; }
-        setRestaurantId(restaurant._id);
-
-        const ordersRes = await API.get(`/kitchen/orders/${restaurant._id}`);
+        const ordersRes = await API.get(`/kitchen/orders/${rid}`);
         const mapped = ordersRes.data.orders.map((o: KitchenOrder) => ({
           ...o,
           status: backendToKDS[o.status] || 'NEW',
@@ -152,40 +149,56 @@ export default function KitchenDisplayScreen() {
         }));
         setOrders(mapped);
 
-        // Connect socket
         socketService.connect();
-        socketService.joinKitchen(restaurant._id);
+        socketService.joinKitchen(rid);
 
-        // Listen for new orders in real time
         socketService.onNewOrder((newOrder: KitchenOrder) => {
           setOrders(prev => [{
-  _id: newOrder._id,
-  type: newOrder.orderType,
-  orderType: newOrder.orderType,
-  tableNumber: newOrder.tableNumber,
-  createdAt: newOrder.createdAt,
-  placedAt: new Date(newOrder.createdAt).getTime(),
-  status: 'NEW' as OrderStatus,
-  customer: newOrder.customer,
-  items: newOrder.items,
-}, ...prev]);
+            _id: newOrder._id,
+            type: newOrder.orderType,
+            orderType: newOrder.orderType,
+            tableNumber: newOrder.tableNumber,
+            createdAt: newOrder.createdAt,
+            placedAt: new Date(newOrder.createdAt).getTime(),
+            status: 'NEW' as OrderStatus,
+            customer: newOrder.customer,
+            items: newOrder.items,
+          }, ...prev]);
         });
 
-        // Listen for status updates
         socketService.onOrderStatusUpdate(({ orderId, status }: OrderStatusUpdate) => {
           setOrders(prev => prev.map(o =>
             o._id === orderId ? { ...o, status: backendToKDS[status] || o.status } : o
           ));
         });
-
       } catch (err) {
         console.error('KDS fetch error', err);
+        setError('Unable to load kitchen orders.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrders();
+    const prepareBoard = async () => {
+      const assignedId = user?.restaurantId;
+      if (assignedId) {
+        setRestaurantId(assignedId);
+        await fetchOrders(assignedId);
+        return;
+      }
+
+      try {
+        const res = await API.get('/restaurants');
+        setRestaurants(res.data.restaurants || []);
+      } catch (err) {
+        console.error('KDS restaurant list error', err);
+        setError('Unable to load restaurants.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    prepareBoard();
 
     const clockId = setInterval(() => setTime(new Date()), 1000);
     return () => {
@@ -193,6 +206,26 @@ export default function KitchenDisplayScreen() {
       socketService.disconnect();
     };
   }, [user]);
+
+  const assignRestaurant = async () => {
+    if (!restaurantId) {
+      setError('Select the restaurant you work at');
+      return;
+    }
+    setAssigning(true);
+    setError('');
+    try {
+      const res = await API.post('/kitchen/assign', { restaurantId });
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+      window.location.reload();
+    } catch (err) {
+      console.error('Kitchen assignment error', err);
+      setError('Unable to assign this restaurant.');
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   const updateStatus = async (id: string, next: OrderStatus) => {
   try {
@@ -250,6 +283,35 @@ export default function KitchenDisplayScreen() {
             <div className="w-10 h-10 border-2 border-amber border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-cream-muted text-sm">Loading orders...</p>
           </div>
+        </div>
+      ) : !user?.restaurantId ? (
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="w-full max-w-md bg-warm-900 border border-warm-700 rounded-2xl p-6">
+            <h2 className="font-display text-2xl text-cream mb-2">Select your restaurant</h2>
+            <p className="text-cream-muted text-sm mb-4">Your kitchen account is not assigned yet. Choose the restaurant whose orders you should see.</p>
+            {error && <p className="mb-3 text-red-400 text-sm">{error}</p>}
+            <select
+              value={restaurantId}
+              onChange={e => setRestaurantId(e.target.value)}
+              className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 text-cream mb-4 focus:outline-none focus:border-amber text-sm"
+            >
+              <option value="">Choose a restaurant</option>
+              {restaurants.map(restaurant => (
+                <option key={restaurant._id} value={restaurant._id}>{restaurant.name}</option>
+              ))}
+            </select>
+            <button
+              onClick={assignRestaurant}
+              disabled={assigning}
+              className="w-full py-3 bg-amber hover:bg-amber-hover text-warm-950 font-semibold rounded-xl disabled:opacity-50"
+            >
+              {assigning ? 'Assigning...' : 'Open Kitchen Board'}
+            </button>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-red-400 text-sm">{error}</p>
         </div>
       ) : (
         <div className="flex flex-1 gap-0 overflow-hidden">

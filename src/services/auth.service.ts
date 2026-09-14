@@ -7,6 +7,7 @@ export interface RegisterData {
   role: 'customer' | 'admin' | 'kitchen';
   restaurantName?: string;
   assignedStation?: string;
+  restaurantId?: string;
 }
 
 export interface LoginData {

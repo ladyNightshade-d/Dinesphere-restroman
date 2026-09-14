@@ -8,6 +8,7 @@ interface User {
   role: 'customer' | 'admin' | 'kitchen';
   restaurantName?: string;
   assignedStation?: string;
+  restaurantId?: string;
 }
 
 interface AuthContextType {

@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ChefHat } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import API from '../../services/api';
 import { getApiErrorMessage } from '../../services/apiError';
+import { Restaurant } from '../../types/domain';
 
 const stations = ['Grill', 'Pastry', 'Beverages', 'Cold Kitchen', 'Hot Kitchen', 'Expediting'];
 
@@ -13,20 +15,29 @@ export default function KitchenSignUpPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [station, setStation] = useState('');
+  const [restaurantId, setRestaurantId] = useState('');
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    API.get('/restaurants')
+      .then((res) => setRestaurants(res.data.restaurants || []))
+      .catch(() => setError('Unable to load restaurants. Try again.'));
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!restaurantId) { setError('Please select your restaurant'); return; }
     if (!station) { setError('Please select your station'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match'); return; }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     setLoading(true);
     try {
-      await register({ name, email, password, role: 'kitchen', assignedStation: station });
+      await register({ name, email, password, role: 'kitchen', assignedStation: station, restaurantId });
       navigate('/kitchen/kds');
     } catch (error) {
       setError(getApiErrorMessage(error, 'Registration failed. Try again.'));
@@ -93,6 +104,20 @@ export default function KitchenSignUpPage() {
             <div>
               <label className="block text-cream-muted text-xs font-medium mb-1.5 tracking-wide uppercase">Confirm Password</label>
               <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="Repeat password" className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm" />
+            </div>
+            <div>
+              <label className="block text-cream-muted text-xs font-medium mb-1.5 tracking-wide uppercase">Restaurant</label>
+              <select
+                value={restaurantId}
+                onChange={e => setRestaurantId(e.target.value)}
+                required
+                className="w-full bg-warm-800 border border-warm-700 rounded-xl px-4 py-3 text-cream focus:outline-none focus:border-amber transition-colors text-sm"
+              >
+                <option value="">Select your restaurant</option>
+                {restaurants.map(restaurant => (
+                  <option key={restaurant._id} value={restaurant._id}>{restaurant.name}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-cream-muted text-xs font-medium mb-1.5 tracking-wide uppercase">Assigned Station</label>
