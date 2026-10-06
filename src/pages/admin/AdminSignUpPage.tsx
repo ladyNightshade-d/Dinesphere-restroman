@@ -20,7 +20,7 @@ export default function AdminSignUpPage() {
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, updateUser } = useAuth();
   const navigate = useNavigate();
 
   // Step 1
@@ -94,7 +94,13 @@ export default function AdminSignUpPage() {
           ...savedUser,
           restaurantId: createdRestaurant._id || createdRestaurant.id,
           restaurantName,
+          restaurant: restaurantName,
         };
+        updateUser({
+          restaurantId: createdRestaurant._id || createdRestaurant.id,
+          restaurantName,
+          restaurant: restaurantName,
+        });
         sessionStorage.setItem('user', JSON.stringify(updatedUser));
         localStorage.removeItem('user');
       }

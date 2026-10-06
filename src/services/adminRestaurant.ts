@@ -4,8 +4,9 @@ import { Restaurant } from '../types/domain';
 export type AdminUserLike = {
   id?: string;
   _id?: string;
+  restaurant?: string | { name?: string };
+  restaurantName?: string;
   restaurantId?: string;
-  restaurant?: string;
 } | null | undefined;
 
 export const getRestaurantOwnerId = (owner?: string | { _id?: string; id?: string } | null) => {
@@ -24,12 +25,19 @@ export const findRestaurantForUser = (
     user.id || '',
     user._id || '',
     user.restaurantId || '',
-    user.restaurant || '',
+    typeof user.restaurant === 'string' ? user.restaurant : '',
+    typeof user.restaurantName === 'string' ? user.restaurantName : '',
   ].filter(Boolean));
 
-  const normalizedRestaurantName = typeof user.restaurant === 'string' ? user.restaurant.trim().toLowerCase() : '';
+  const restaurantNames = new Set<string>([
+    typeof user.restaurantName === 'string' ? user.restaurantName.trim().toLowerCase() : '',
+    typeof user.restaurant === 'string' ? user.restaurant.trim().toLowerCase() : '',
+    typeof user.restaurant === 'object' && user.restaurant && typeof user.restaurant.name === 'string'
+      ? user.restaurant.name.trim().toLowerCase()
+      : '',
+  ].filter(Boolean));
 
-  if (candidateIds.size === 0 && !normalizedRestaurantName) return undefined;
+  if (candidateIds.size === 0 && restaurantNames.size === 0) return undefined;
 
   const directMatches = restaurants.filter((restaurant) => candidateIds.has(restaurant._id));
   if (directMatches.length === 1) return directMatches[0];
@@ -42,7 +50,8 @@ export const findRestaurantForUser = (
 
   const nameMatches = restaurants.filter((restaurant) => {
     if (!restaurant.name) return false;
-    return restaurant.name.trim().toLowerCase() === normalizedRestaurantName;
+    const normalizedRestaurantName = restaurant.name.trim().toLowerCase();
+    return Array.from(restaurantNames).includes(normalizedRestaurantName);
   });
 
   if (nameMatches.length === 1) return nameMatches[0];

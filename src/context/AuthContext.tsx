@@ -7,6 +7,7 @@ export interface User {
   email: string;
   role: 'customer' | 'admin' | 'kitchen';
   restaurantName?: string;
+  restaurant?: string;
   assignedStation?: string;
   restaurantId?: string;
 }
@@ -16,6 +17,7 @@ export interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
+  updateUser: (updates: Partial<User> | null) => void;
   logout: () => void;
   isLoggedIn: boolean;
 }
@@ -46,6 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email: savedUser.email,
         role: savedUser.role,
         restaurantName: typeof savedUser.restaurantName === 'string' ? savedUser.restaurantName : undefined,
+        restaurant: typeof savedUser.restaurant === 'string' ? savedUser.restaurant : undefined,
         assignedStation: typeof savedUser.assignedStation === 'string' ? savedUser.assignedStation : undefined,
         restaurantId: typeof savedUser.restaurantId === 'string' ? savedUser.restaurantId : undefined,
       });
@@ -63,13 +66,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(data.user);
   };
 
+  const updateUser = (updates: Partial<User> | null) => {
+    setUser((currentUser) => {
+      if (!currentUser && !updates) return null;
+      if (!currentUser) return updates ? ({ ...updates } as User) : null;
+      if (!updates) return null;
+      return { ...currentUser, ...updates };
+    });
+  };
+
   const logout = () => {
     authService.logout();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isLoggedIn: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, register, updateUser, logout, isLoggedIn: !!user }}>
       {children}
     </AuthContext.Provider>
   );
