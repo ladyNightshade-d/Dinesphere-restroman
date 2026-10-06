@@ -3,6 +3,7 @@ import { authService, RegisterData } from '../services/auth.service';
 
 export interface User {
   id: string;
+  _id?: string;
   name: string;
   email: string;
   role: 'customer' | 'admin' | 'kitchen';
@@ -43,7 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (savedUser.role === 'customer' || savedUser.role === 'admin' || savedUser.role === 'kitchen')
     ) {
       setUser({
-        id: savedUser.id,
+        id: typeof savedUser.id === 'string' ? savedUser.id : (typeof savedUser._id === 'string' ? savedUser._id : ''),
+        _id: typeof savedUser._id === 'string' ? savedUser._id : undefined,
         name: savedUser.name,
         email: savedUser.email,
         role: savedUser.role,

@@ -21,15 +21,13 @@ export const findRestaurantForUser = (
 ): Restaurant | undefined => {
   if (!user) return undefined;
 
-  const candidateIds = new Set<string>([
-    user.id || '',
-    user._id || '',
-    user.restaurantId || '',
-    typeof user.restaurant === 'string' ? user.restaurant : '',
-    typeof user.restaurantName === 'string' ? user.restaurantName : '',
-  ].filter(Boolean));
+  const exactRestaurantId = user.restaurantId || user._id || user.id;
+  if (exactRestaurantId) {
+    const restaurantById = restaurants.find((restaurant) => restaurant._id === exactRestaurantId);
+    if (restaurantById) return restaurantById;
+  }
 
-  const restaurantNames = new Set<string>([
+  const normalizedNames = new Set<string>([
     typeof user.restaurantName === 'string' ? user.restaurantName.trim().toLowerCase() : '',
     typeof user.restaurant === 'string' ? user.restaurant.trim().toLowerCase() : '',
     typeof user.restaurant === 'object' && user.restaurant && typeof user.restaurant.name === 'string'
@@ -37,21 +35,27 @@ export const findRestaurantForUser = (
       : '',
   ].filter(Boolean));
 
-  if (candidateIds.size === 0 && restaurantNames.size === 0) return undefined;
+  if (normalizedNames.size === 0) {
+    const ownerMatches = restaurants.filter((restaurant) => {
+      const ownerId = getRestaurantOwnerId(restaurant.owner);
+      const userIds = new Set<string>([
+        user.id || '',
+        user._id || '',
+        user.restaurantId || '',
+      ].filter(Boolean));
 
-  const directMatches = restaurants.filter((restaurant) => candidateIds.has(restaurant._id));
-  if (directMatches.length === 1) return directMatches[0];
-  if (directMatches.length > 1) return undefined;
+      return ownerId ? userIds.has(ownerId) : false;
+    });
 
-  if (user.restaurantId) {
-    const restaurantById = restaurants.find((restaurant) => restaurant._id === user.restaurantId);
-    if (restaurantById) return restaurantById;
+    if (ownerMatches.length === 1) return ownerMatches[0];
+    if (ownerMatches.length > 1) return undefined;
+    return undefined;
   }
 
   const nameMatches = restaurants.filter((restaurant) => {
     if (!restaurant.name) return false;
     const normalizedRestaurantName = restaurant.name.trim().toLowerCase();
-    return Array.from(restaurantNames).includes(normalizedRestaurantName);
+    return Array.from(normalizedNames).includes(normalizedRestaurantName);
   });
 
   if (nameMatches.length === 1) return nameMatches[0];
@@ -59,7 +63,13 @@ export const findRestaurantForUser = (
 
   const ownerMatches = restaurants.filter((restaurant) => {
     const ownerId = getRestaurantOwnerId(restaurant.owner);
-    return ownerId ? candidateIds.has(ownerId) : false;
+    const userIds = new Set<string>([
+      user.id || '',
+      user._id || '',
+      user.restaurantId || '',
+    ].filter(Boolean));
+
+    return ownerId ? userIds.has(ownerId) : false;
   });
 
   if (ownerMatches.length === 1) return ownerMatches[0];

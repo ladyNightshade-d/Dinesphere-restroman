@@ -55,18 +55,20 @@ const persistAuthSession = (payload: { token?: string; user?: Record<string, unk
 export const authService = {
   register: async (data: RegisterData) => {
     const res = await API.post('/auth/register', data);
+    const user = res.data?.user ?? null;
     persistAuthSession({
       token: res.data.token,
-      user: res.data.user,
+      user,
     });
     return res.data;
   },
 
   login: async (data: LoginData) => {
     const res = await API.post('/auth/login', data);
+    const user = res.data?.user ?? null;
     persistAuthSession({
       token: res.data.token,
-      user: res.data.user,
+      user,
     });
     return res.data;
   },
