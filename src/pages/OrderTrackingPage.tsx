@@ -86,7 +86,7 @@ export default function OrderTrackingPage() {
   );
 
   const subtotal = order.totalAmount || 0;
-  const deliveryFee = order.deliveryFee || 4.99;
+  const deliveryFee = order.deliveryFee ?? 0;
 
   return (
     <div className="bg-warm-950 min-h-screen pt-[72px]">

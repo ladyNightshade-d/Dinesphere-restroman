@@ -10,6 +10,7 @@ interface CartItem {
   id: string;
   name: string;
   price: number;
+  sizes?: { label: string; price: number }[];
   qty: number;
   image: string;
   size: 'small' | 'medium' | 'large';
@@ -33,7 +34,7 @@ export default function CartPage() {
   const initialCart = state?.cart || [];
   const restaurantId = state?.restaurantId || '';
   const restaurantName = state?.restaurantName || 'Restaurant';
-  const deliveryFee = state?.deliveryFee || 4.99;
+  const deliveryFee = state?.deliveryFee ?? 0;
 
   const [items, setItems] = useState<CartItem[]>(initialCart);
   const [address, setAddress] = useState('');
@@ -52,7 +53,9 @@ export default function CartPage() {
     setItems(prev => prev.filter(c => c.id !== id));
   };
 
-  const subtotal = items.reduce((s, c) => s + c.price * c.qty, 0);
+  const getUnitPrice = (item: CartItem) =>
+    item.sizes?.find(option => option.label.toLowerCase() === item.size)?.price ?? item.price;
+  const subtotal = items.reduce((sum, item) => sum + getUnitPrice(item) * item.qty, 0);
   const total = subtotal + deliveryFee;
 
   const handlePlaceOrder = async () => {
@@ -130,11 +133,12 @@ export default function CartPage() {
                       <button
                         key={s}
                         onClick={() => updateSize(item.id, s)}
+                        disabled={Boolean(item.sizes?.length) && !item.sizes?.some(option => option.label.toLowerCase() === s)}
                         className={`px-3 py-1 rounded-lg text-xs font-medium transition-all capitalize ${
                           (item.size || 'medium') === s
                             ? 'bg-amber text-warm-950'
                             : 'bg-warm-700 text-cream-muted hover:text-cream border border-warm-600'
-                        }`}
+                        } disabled:opacity-40 disabled:cursor-not-allowed`}
                       >
                         {s}
                       </button>
@@ -151,8 +155,8 @@ export default function CartPage() {
                   </button>
                 </div>
                 <div className="text-right min-w-[70px]">
-                  <p className="text-amber font-semibold">${(item.price * item.qty).toFixed(2)}</p>
-                  <p className="text-warm-500 text-xs">${item.price} each</p>
+                  <p className="text-amber font-semibold">${(getUnitPrice(item) * item.qty).toFixed(2)}</p>
+                  <p className="text-warm-500 text-xs">${getUnitPrice(item)} each</p>
                 </div>
                 <button onClick={() => remove(item.id)} className="text-warm-500 hover:text-red-400 transition-colors p-1">
                   <Trash2 size={16} />
@@ -181,7 +185,7 @@ export default function CartPage() {
                 {items.map(item => (
                   <div key={item.id} className="flex justify-between text-sm">
                     <span className="text-cream-muted">{item.name} ×{item.qty}</span>
-                    <span className="text-cream">${(item.price * item.qty).toFixed(2)}</span>
+                    <span className="text-cream">${(getUnitPrice(item) * item.qty).toFixed(2)}</span>
                   </div>
                 ))}
               </div>

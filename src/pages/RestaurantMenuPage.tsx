@@ -9,6 +9,7 @@ interface CartItem {
   id: string;
   name: string;
   price: number;
+  sizes?: { label: string; price: number }[];
   qty: number;
   size: 'small' | 'medium' | 'large';
   image: string;
@@ -29,6 +30,9 @@ const formatCuisine = (cuisine?: string | string[]) => {
 
   return 'Various cuisines';
 };
+
+const getItemPrice = (item: CartItem) =>
+  item.sizes?.find(option => option.label.toLowerCase() === item.size)?.price ?? item.price;
 
 export default function RestaurantMenuPage() {
   const { id } = useParams();
@@ -68,12 +72,16 @@ export default function RestaurantMenuPage() {
     setCart(prev => {
       const existing = prev.find(c => c.id === item._id);
       if (existing) return prev.map(c => c.id === item._id ? { ...c, qty: c.qty + 1 } : c);
+      const availableSizes = ['small', 'medium', 'large'].filter(size =>
+        item.sizes?.some(option => option.label.toLowerCase() === size)
+      );
       return [...prev, {
         id: item._id,
         name: item.name,
         price: item.price,
+        sizes: item.sizes,
         qty: 1,
-        size: 'medium',
+        size: availableSizes.includes('medium') ? 'medium' : (availableSizes[0] as CartItem['size'] | undefined) || 'medium',
         image: item.image || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
       }];
     });
@@ -85,7 +93,7 @@ export default function RestaurantMenuPage() {
     setCart(prev => prev.map(c => c.id === id ? { ...c, qty: Math.max(1, c.qty + delta) } : c));
   };
 
-  const cartTotal = cart.reduce((s, c) => s + c.price * c.qty, 0);
+  const cartTotal = cart.reduce((sum, item) => sum + getItemPrice(item) * item.qty, 0);
   const cartCount = cart.reduce((s, c) => s + c.qty, 0);
   const visibleItems = menu[activeCategory] || [];
 
@@ -250,7 +258,7 @@ export default function RestaurantMenuPage() {
                     <img src={item.image} alt={item.name} className="w-12 h-12 rounded-md object-cover flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-cream text-xs font-medium truncate">{item.name}</p>
-                      <p className="text-amber text-xs">${(item.price * item.qty).toFixed(2)}</p>
+                      <p className="text-amber text-xs">${(getItemPrice(item) * item.qty).toFixed(2)}</p>
                     </div>
                     <div className="flex items-center gap-1">
                       <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center rounded bg-warm-800 hover:bg-warm-700 text-cream transition-colors">
@@ -276,15 +284,15 @@ export default function RestaurantMenuPage() {
                 </div>
                 <div className="flex justify-between text-sm mb-4">
                   <span className="text-cream-muted">Delivery</span>
-                  <span className="text-cream">${restaurant.deliveryFee?.toFixed(2) || '4.99'}</span>
+                  <span className="text-cream">${(restaurant.deliveryFee ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-semibold mb-4">
                   <span className="text-cream">Total</span>
-                  <span className="text-amber text-lg">${(cartTotal + (restaurant.deliveryFee || 4.99)).toFixed(2)}</span>
+                  <span className="text-amber text-lg">${(cartTotal + (restaurant.deliveryFee ?? 0)).toFixed(2)}</span>
                 </div>
                 <Link
                   to="/cart"
-                  state={{ cart, restaurantId: id, restaurantName: restaurant.name, deliveryFee: restaurant.deliveryFee || 4.99 }}
+                  state={{ cart, restaurantId: id, restaurantName: restaurant.name, deliveryFee: restaurant.deliveryFee ?? 0 }}
                   className="block w-full text-center py-3 bg-amber hover:bg-amber-hover text-warm-950 font-semibold rounded-xl transition-colors"
                 >
                   Review Cart

@@ -114,7 +114,7 @@ export default function AdminDashboard() {
             {[
               { label: 'Total Orders Today', value: stats?.stats?.totalOrdersToday ?? 0, delta: 'Today', icon: ShoppingBag, color: 'text-amber' },
               { label: 'Revenue Today', value: `$${(stats?.stats?.revenueToday ?? 0).toFixed(2)}`, delta: 'Today', icon: TrendingUp, color: 'text-green-400' },
-              { label: 'Active Tables', value: stats?.stats?.activeTables ?? 0, delta: 'Reservations', icon: Users, color: 'text-blue-400' },
+              { label: 'Active Reservations', value: stats?.stats?.activeTables ?? 0, delta: 'Today', icon: Users, color: 'text-blue-400' },
               { label: 'Pending Orders', value: stats?.stats?.pendingOrders ?? 0, delta: 'Needs attention', icon: AlertCircle, color: 'text-red-400' },
             ].map((stat, i) => {
               const Icon = stat.icon;
