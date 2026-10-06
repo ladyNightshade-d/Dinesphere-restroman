@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import API from '../../services/api';
 import { getApiErrorMessage } from '../../services/apiError';
 
@@ -70,8 +70,8 @@ export default function AdminSignUpPage() {
 
     try {
       await register({ name, email, password, role: 'admin', restaurantName });
-      const token = localStorage.getItem('token');
-      await API.post('/restaurants', {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const restaurantRes = await API.post('/restaurants', {
         name: restaurantName,
         description,
         address,
@@ -86,6 +86,19 @@ export default function AdminSignUpPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      const createdRestaurant = restaurantRes.data?.restaurant || restaurantRes.data;
+      if (createdRestaurant?._id || createdRestaurant?.id) {
+        const savedUser = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}');
+        const updatedUser = {
+          ...savedUser,
+          restaurantId: createdRestaurant._id || createdRestaurant.id,
+          restaurantName,
+        };
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        localStorage.removeItem('user');
+      }
+
       navigate('/admin/dashboard');
     } catch (error) {
       setError(getApiErrorMessage(error, 'Registration failed. Try again.'));

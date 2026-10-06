@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import AdminSidebar from '../../components/AdminSidebar';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import API from '../../services/api';
+import { fetchCurrentAdminRestaurant } from '../../services/adminRestaurant';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
-import { MenuItem, Restaurant } from '../../types/domain';
+import { MenuItem } from '../../types/domain';
 
 const CATEGORIES = ['Starters', 'Mains', 'Desserts', 'Drinks'];
 
@@ -20,22 +21,30 @@ export default function AdminMenuPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find((r: Restaurant) => 
-  (typeof r.owner === 'string' ? r.owner : r.owner?._id) === user?.id
-);
-        if (myRestaurant) {
-          setRestaurantId(myRestaurant._id);
-          const menuRes = await API.get(`/menu/restaurant/${myRestaurant._id}`);
-          setItems(menuRes.data.items || []);
+        if (!user) {
+          setLoading(false);
+          return;
         }
+
+        const myRestaurant = await fetchCurrentAdminRestaurant(user);
+        if (!myRestaurant) {
+          setRestaurantId('');
+          setItems([]);
+          setLoading(false);
+          return;
+        }
+
+        setRestaurantId(myRestaurant._id);
+        const menuRes = await API.get(`/menu/restaurant/${myRestaurant._id}`);
+        setItems(menuRes.data.items || []);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    if (user?.id) fetchData();
+
+    fetchData();
   }, [user]);
 
   const openAdd = () => {

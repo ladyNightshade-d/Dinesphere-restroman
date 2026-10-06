@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Bell, TrendingUp, ShoppingBag, Users, AlertCircle } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import API from '../../services/api';
-import { DashboardStats, Restaurant } from '../../types/domain';
+import { fetchCurrentAdminRestaurant } from '../../services/adminRestaurant';
+import { DashboardStats } from '../../types/domain';
 
 const statusColor: Record<string, string> = {
   placed: 'bg-yellow-900/60 text-yellow-300',
@@ -22,17 +23,24 @@ export default function AdminDashboard() {
   const [, setRestaurantId] = useState<string>('');
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     const fetchRestaurant = async () => {
       try {
-        // Get admin's restaurant
-        const res = await API.get('/restaurants');
-          const myRestaurant = res.data.restaurants.find((r: Restaurant) => 
-        (typeof r.owner === 'string' ? r.owner : r.owner?._id) === user?.id
-);
-        if (myRestaurant) {
-          setRestaurantId(myRestaurant._id);
-          fetchDashboard(myRestaurant._id);
+        const myRestaurant = await fetchCurrentAdminRestaurant(user);
+
+        if (!myRestaurant) {
+          setRestaurantId('');
+          setStats(null);
+          setLoading(false);
+          return;
         }
+
+        setRestaurantId(myRestaurant._id);
+        await fetchDashboard(myRestaurant._id);
       } catch (err) {
         console.error('Failed to fetch restaurant', err);
         setLoading(false);
@@ -50,7 +58,7 @@ export default function AdminDashboard() {
       }
     };
 
-    if (user?.id) fetchRestaurant();
+    fetchRestaurant();
   }, [user]);
 
   const maxRevenue = stats?.salesChart

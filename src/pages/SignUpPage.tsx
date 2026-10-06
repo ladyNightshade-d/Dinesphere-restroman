@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UtensilsCrossed, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getApiErrorMessage } from '../services/apiError';
 
 const googleSignInUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`;

@@ -7,10 +7,10 @@ import {
   MapPin, Link as LinkIcon
 } from 'lucide-react';
 import AdminSidebar from '../../components/AdminSidebar';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import API from '../../services/api';
+import { fetchCurrentAdminRestaurant } from '../../services/adminRestaurant';
 import { getApiErrorMessage } from '../../services/apiError';
-import { Restaurant } from '../../types/domain';
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return <div className="bg-warm-900 border border-warm-700 rounded-2xl overflow-hidden">{children}</div>;
@@ -57,6 +57,22 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () =
     </div>
   );
 }
+
+const formatCuisine = (cuisine?: string | string[]) => {
+  if (Array.isArray(cuisine)) {
+    return cuisine.map(item => item.trim()).filter(Boolean).join(', ') || 'Various cuisines';
+  }
+
+  if (typeof cuisine === 'string') {
+    return cuisine
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+      .join(', ') || 'Various cuisines';
+  }
+
+  return 'Various cuisines';
+};
 
 function SaveButton({ saved, onClick }: { saved: boolean; onClick?: () => void }) {
   return (
@@ -160,29 +176,32 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     const fetchRestaurant = async () => {
       try {
-        const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find(
-          (r: Restaurant) => (typeof r.owner === 'string' ? r.owner : r.owner?._id) === user?.id
-        );
-        if (myRestaurant) {
-          setRestaurantId(myRestaurant._id);
-          setRestName(myRestaurant.name || '');
-          setRestDesc(myRestaurant.description || '');
-          setRestAddress(myRestaurant.address || '');
-          setRestPhone(myRestaurant.phone || '');
-          setRestEmail(myRestaurant.email || '');
-          setRestCuisine(myRestaurant.cuisine?.join(', ') || '');
-          setCoverImage(myRestaurant.images?.[0] || '');
-          if (myRestaurant.openingHours?.[0]) {
-            setOpenTime(myRestaurant.openingHours[0].open || '09:00');
-            setCloseTime(myRestaurant.openingHours[0].close || '22:00');
-          }
+        if (!user) return;
+
+        const myRestaurant = await fetchCurrentAdminRestaurant(user);
+        if (!myRestaurant) {
+          setRestaurantId('');
+          return;
+        }
+
+        setRestaurantId(myRestaurant._id);
+        setRestName(myRestaurant.name || '');
+        setRestDesc(myRestaurant.description || '');
+        setRestAddress(myRestaurant.address || '');
+        setRestPhone(myRestaurant.phone || '');
+        setRestEmail(myRestaurant.email || '');
+        setRestCuisine(formatCuisine(myRestaurant.cuisine));
+        setCoverImage(myRestaurant.images?.[0] || '');
+        if (myRestaurant.openingHours?.[0]) {
+          setOpenTime(myRestaurant.openingHours[0].open || '09:00');
+          setCloseTime(myRestaurant.openingHours[0].close || '22:00');
         }
       } catch (err) {
         console.error('Failed to load restaurant', err);
       }
     };
-    if (user?.id) fetchRestaurant();
+
+    fetchRestaurant();
   }, [user]);
 
   const showSaved = (section: string) => {

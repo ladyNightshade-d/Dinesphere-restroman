@@ -14,6 +14,22 @@ interface CartItem {
   image: string;
 }
 
+const formatCuisine = (cuisine?: string | string[]) => {
+  if (Array.isArray(cuisine)) {
+    return cuisine.map(item => item.trim()).filter(Boolean).join(', ') || 'Various cuisines';
+  }
+
+  if (typeof cuisine === 'string') {
+    return cuisine
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+      .join(', ') || 'Various cuisines';
+  }
+
+  return 'Various cuisines';
+};
+
 export default function RestaurantMenuPage() {
   const { id } = useParams();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -113,7 +129,7 @@ export default function RestaurantMenuPage() {
           <div>
             <h1 className="font-display text-5xl text-cream font-semibold mb-2">{restaurant.name}</h1>
             <div className="flex items-center gap-5 text-sm text-cream-muted">
-              <span className="text-amber font-medium">{restaurant.cuisine?.join(', ')}</span>
+              <span className="text-amber font-medium">{formatCuisine(restaurant.cuisine)}</span>
               <div className="flex items-center gap-1">
                 <Star size={13} className="text-amber fill-amber" />
                 <span className="text-cream font-medium">{restaurant.rating || 'New'}</span>

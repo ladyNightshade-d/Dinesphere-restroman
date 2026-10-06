@@ -15,14 +15,23 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      localStorage.setItem('token', token);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('token', token);
+      }
+
       try {
         const data = await authService.getMe();
-        localStorage.setItem('user', JSON.stringify(data.user));
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('user', JSON.stringify(data.user));
+        }
         navigate('/discover', { replace: true });
       } catch {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
         setError('Google sign-in could not be completed.');
       }
     };

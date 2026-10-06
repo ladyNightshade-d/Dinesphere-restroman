@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import AdminSidebar from '../../components/AdminSidebar';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import API from '../../services/api';
+import { fetchCurrentAdminRestaurant } from '../../services/adminRestaurant';
 import { Plus, X, AlertTriangle } from 'lucide-react';
-import { InventoryItem, Restaurant } from '../../types/domain';
+import { InventoryItem } from '../../types/domain';
 
 export default function AdminInventoryPage() {
   const { user } = useAuth();
@@ -16,22 +17,30 @@ export default function AdminInventoryPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find((r: Restaurant) => 
-  (typeof r.owner === 'string' ? r.owner : r.owner?._id) === user?.id
-);
-        if (myRestaurant) {
-          setRestaurantId(myRestaurant._id);
-          const inv = await API.get(`/inventory/${myRestaurant._id}`);
-          setItems(inv.data.items || []);
+        if (!user) {
+          setLoading(false);
+          return;
         }
+
+        const myRestaurant = await fetchCurrentAdminRestaurant(user);
+        if (!myRestaurant) {
+          setRestaurantId('');
+          setItems([]);
+          setLoading(false);
+          return;
+        }
+
+        setRestaurantId(myRestaurant._id);
+        const inv = await API.get(`/inventory/${myRestaurant._id}`);
+        setItems(inv.data.items || []);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    if (user?.id) fetchData();
+
+    fetchData();
   }, [user]);
 
   const handleAdd = async () => {

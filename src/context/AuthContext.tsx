@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useState, useEffect, ReactNode } from 'react';
 import { authService, RegisterData } from '../services/auth.service';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -11,7 +11,7 @@ interface User {
   restaurantId?: string;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -20,7 +20,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -28,7 +28,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const savedUser = authService.getCurrentUser();
-    if (savedUser) setUser(savedUser);
+    if (
+      savedUser &&
+      typeof savedUser === 'object' &&
+      'id' in savedUser &&
+      'name' in savedUser &&
+      'email' in savedUser &&
+      'role' in savedUser &&
+      typeof savedUser.id === 'string' &&
+      typeof savedUser.name === 'string' &&
+      typeof savedUser.email === 'string' &&
+      (savedUser.role === 'customer' || savedUser.role === 'admin' || savedUser.role === 'kitchen')
+    ) {
+      setUser({
+        id: savedUser.id,
+        name: savedUser.name,
+        email: savedUser.email,
+        role: savedUser.role,
+        restaurantName: typeof savedUser.restaurantName === 'string' ? savedUser.restaurantName : undefined,
+        assignedStation: typeof savedUser.assignedStation === 'string' ? savedUser.assignedStation : undefined,
+        restaurantId: typeof savedUser.restaurantId === 'string' ? savedUser.restaurantId : undefined,
+      });
+    }
     setLoading(false);
   }, []);
 
@@ -54,8 +75,3 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
-};

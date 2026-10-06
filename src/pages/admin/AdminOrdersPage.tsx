@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import AdminSidebar from '../../components/AdminSidebar';
-import { useAuth } from '../../context/AuthContext';
-import API from '../../services/api';
+import { useAuth } from '../../context/useAuth';
+import { fetchCurrentAdminRestaurant } from '../../services/adminRestaurant';
 import { orderService } from '../../services/order.service';
-import { OrderRecord, Restaurant } from '../../types/domain';
+import { OrderRecord } from '../../types/domain';
 
 const statusColor: Record<string, string> = {
   placed: 'bg-yellow-900/60 text-yellow-300',
@@ -27,15 +27,22 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await API.get('/restaurants');
-        const myRestaurant = res.data.restaurants.find((r: Restaurant) => 
-  (typeof r.owner === 'string' ? r.owner : r.owner?._id) === user?.id
-);
-        if (myRestaurant) {
-          setRestaurantId(myRestaurant._id);
-          const ordersData = await orderService.getRestaurantOrders(myRestaurant._id);
-          setOrders(ordersData);
+        if (!user) {
+          setLoading(false);
+          return;
         }
+
+        const myRestaurant = await fetchCurrentAdminRestaurant(user);
+        if (!myRestaurant) {
+          setRestaurantId('');
+          setOrders([]);
+          setLoading(false);
+          return;
+        }
+
+        setRestaurantId(myRestaurant._id);
+        const ordersData = await orderService.getRestaurantOrders(myRestaurant._id);
+        setOrders(ordersData);
       } catch (err) {
         console.error(err);
       } finally {

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ArrowRight } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { orderService } from '../services/order.service';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getApiErrorMessage } from '../services/apiError';
 
 interface CartItem {

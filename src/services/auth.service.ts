@@ -1,5 +1,32 @@
 import API from './api';
 
+const readSessionValue = <T>(key: string): T | null => {
+  if (typeof window === 'undefined') return null;
+
+  const raw = sessionStorage.getItem(key) ?? localStorage.getItem(key);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return raw as unknown as T;
+  }
+};
+
+const writeSessionValue = (key: string, value: string) => {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem(key, value);
+  localStorage.removeItem(key);
+};
+
+const clearAuthStorage = () => {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('user');
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+};
+
 export interface RegisterData {
   name: string;
   email: string;
@@ -15,18 +42,32 @@ export interface LoginData {
   password: string;
 }
 
+const persistAuthSession = (payload: { token?: string; user?: Record<string, unknown> }) => {
+  if (payload.token) {
+    writeSessionValue('token', payload.token);
+  }
+
+  if (payload.user) {
+    writeSessionValue('user', JSON.stringify(payload.user));
+  }
+};
+
 export const authService = {
   register: async (data: RegisterData) => {
     const res = await API.post('/auth/register', data);
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
+    persistAuthSession({
+      token: res.data.token,
+      user: res.data.user,
+    });
     return res.data;
   },
 
   login: async (data: LoginData) => {
     const res = await API.post('/auth/login', data);
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
+    persistAuthSession({
+      token: res.data.token,
+      user: res.data.user,
+    });
     return res.data;
   },
 
@@ -46,8 +87,7 @@ export const authService = {
   },
 
   logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearAuthStorage();
   },
 
   getMe: async () => {
@@ -56,9 +96,8 @@ export const authService = {
   },
 
   getCurrentUser: () => {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    return readSessionValue<Record<string, unknown>>('user');
   },
 
-  isLoggedIn: () => !!localStorage.getItem('token'),
+  isLoggedIn: () => !!(sessionStorage.getItem('token') || localStorage.getItem('token')),
 };

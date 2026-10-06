@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { UtensilsCrossed, Monitor } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { KitchenOrder, OrderStatusUpdate, socketService } from '../../services/socket.service';
 import API from '../../services/api';
 
@@ -216,8 +216,12 @@ export default function KitchenDisplayScreen() {
     setError('');
     try {
       const res = await API.post('/kitchen/assign', { restaurantId });
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('token', res.data.token);
+        sessionStorage.setItem('user', JSON.stringify(res.data.user));
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
       window.location.reload();
     } catch (err) {
       console.error('Kitchen assignment error', err);

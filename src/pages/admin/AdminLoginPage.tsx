@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { getApiErrorMessage } from '../../services/apiError';
 
 export default function AdminLoginPage() {
@@ -18,8 +18,8 @@ export default function AdminLoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
-      const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      await login(email.trim(), password);
+      const savedUser = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}');
       if (savedUser.role !== 'admin') {
         logout();
         setError('This account is not an admin account');

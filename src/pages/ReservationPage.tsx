@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Users, CheckCircle2, Calendar, Clock } from 
 import Navbar from '../components/Navbar';
 import { restaurantService } from '../services/restaurant.service';
 import { reservationService } from '../services/reservation.service';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getApiErrorMessage } from '../services/apiError';
 import { Restaurant, ReservationRecord } from '../types/domain';
 
@@ -16,6 +16,22 @@ const timeSlots = [
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
+
+const formatCuisine = (cuisine?: string | string[]) => {
+  if (Array.isArray(cuisine)) {
+    return cuisine.map(item => item.trim()).filter(Boolean).join(', ') || 'Various cuisines';
+  }
+
+  if (typeof cuisine === 'string') {
+    return cuisine
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+      .join(', ') || 'Various cuisines';
+  }
+
+  return 'Various cuisines';
+};
 
 export default function ReservationPage() {
   const { id } = useParams();
@@ -162,7 +178,7 @@ export default function ReservationPage() {
           <p className="text-amber text-xs font-medium tracking-[0.3em] uppercase mb-2">Table Reservation</p>
           <h1 className="font-display text-4xl text-cream font-semibold">{restaurant?.name}</h1>
           <p className="text-cream-muted mt-1 text-sm">
-            {restaurant?.address} · {restaurant?.cuisine?.join(', ')}
+            {restaurant?.address} · {restaurant ? formatCuisine(restaurant.cuisine) : 'Various cuisines'}
           </p>
         </div>
 

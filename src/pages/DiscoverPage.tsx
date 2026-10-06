@@ -8,6 +8,21 @@ import { Restaurant } from '../types/domain';
 const cuisines = ['All', 'American', 'Indian', 'French', 'Japanese', 'Italian', 'Mediterranean'];
 const ratings = ['Any', '4.5+', '4.7+', '4.9+'];
 
+const getCuisineList = (cuisine: string | string[] | undefined): string[] => {
+  if (Array.isArray(cuisine)) {
+    return cuisine.map(item => item.trim()).filter(Boolean);
+  }
+
+  if (typeof cuisine === 'string') {
+    return cuisine
+      .split(',')
+      .map(item => item.trim())
+      .filter((item): item is string => Boolean(item));
+  }
+
+  return [];
+};
+
 export default function DiscoverPage() {
   const [activeCuisine, setActiveCuisine] = useState('All');
   const [activeRating, setActiveRating] = useState('Any');
@@ -31,17 +46,28 @@ export default function DiscoverPage() {
     fetchRestaurants();
   }, []);
 
-  const filtered = restaurants.filter(r => {
-    const matchCuisine = activeCuisine === 'All' || r.cuisine?.includes(activeCuisine);
-    const matchRating =
-      activeRating === 'Any' ? true :
-      activeRating === '4.5+' ? (r.rating || 0) >= 4.5 :
-      activeRating === '4.7+' ? (r.rating || 0) >= 4.7 :
-      (r.rating || 0) >= 4.9;
-    const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.cuisine?.toString().toLowerCase().includes(search.toLowerCase());
-    return matchCuisine && matchRating && matchSearch;
-  });
+  const filtered = [...restaurants]
+    .filter(r => {
+      const cuisineList = getCuisineList(r.cuisine);
+      const normalizedCuisine = activeCuisine.toLowerCase();
+      const matchCuisine = activeCuisine === 'All' || cuisineList.some((c: string) => c.toLowerCase().includes(normalizedCuisine));
+      const matchRating =
+        activeRating === 'Any' ? true :
+        activeRating === '4.5+' ? (r.rating || 0) >= 4.5 :
+        activeRating === '4.7+' ? (r.rating || 0) >= 4.7 :
+        (r.rating || 0) >= 4.9;
+      const searchValue = search.trim().toLowerCase();
+      const matchSearch = searchValue.length === 0 || [r.name, cuisineList.join(', '), r.address || '']
+        .join(' ')
+        .toLowerCase()
+        .includes(searchValue);
+      return matchCuisine && matchRating && matchSearch;
+    })
+    .sort((a, b) => {
+      const activeScore = Number(b.isActive) - Number(a.isActive);
+      if (activeScore !== 0) return activeScore;
+      return (b.rating || 0) - (a.rating || 0);
+    });
 
   return (
     <div className="bg-warm-950 min-h-screen pt-20">
@@ -150,52 +176,57 @@ export default function DiscoverPage() {
         {!loading && !error && filtered.length > 0 && (
           <>
             <p className="text-cream-muted text-sm mb-6">{filtered.length} restaurants found</p>
-            <div className="grid grid-cols-3 gap-7">
-              {filtered.map(r => (
-                <Link
-                  key={r._id}
-                  to={`/restaurant/${r._id}`}
-                  className="group bg-warm-800 border border-warm-700 rounded-2xl overflow-hidden hover:border-amber/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-amber/10"
-                >
-                  <div className="relative aspect-[16/10] overflow-hidden">
-                    <img
-                      src={r.images?.[0] || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800'}
-                      alt={r.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 right-3">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        r.isActive ? 'bg-green-900/80 text-green-300' : 'bg-warm-950/80 text-warm-500'
-                      }`}>
-                        {r.isActive ? 'Open Now' : 'Closed'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <div className="flex items-start justify-between mb-1">
-                      <h3 className="font-display text-lg text-cream font-medium group-hover:text-amber transition-colors">{r.name}</h3>
-                    </div>
-                    <p className="text-cream-muted text-sm mb-3">{r.cuisine?.join(', ')}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            size={13}
-                            className={i < Math.floor(r.rating || 0) ? 'text-amber fill-amber' : 'text-warm-600'}
-                          />
-                        ))}
-                        <span className="text-amber text-sm font-semibold ml-1">{r.rating || 'New'}</span>
-                        <span className="text-warm-500 text-xs ml-1">({r.totalReviews || 0})</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-cream-muted text-xs">
-                        <MapPin size={12} className="text-amber" />
-                        {r.address || 'Location TBD'}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
+              {filtered.map(r => {
+                const cuisineList = getCuisineList(r.cuisine);
+                const cuisineLabel = cuisineList.length ? cuisineList.join(', ') : 'Various cuisines';
+
+                return (
+                  <Link
+                    key={r._id}
+                    to={`/restaurant/${r._id}`}
+                    className="group bg-warm-800 border border-warm-700 rounded-2xl overflow-hidden hover:border-amber/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-amber/10"
+                  >
+                    <div className="relative aspect-[16/10] overflow-hidden">
+                      <img
+                        src={r.images?.[0] || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800'}
+                        alt={r.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 right-3">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          r.isActive ? 'bg-green-900/80 text-green-300' : 'bg-warm-950/80 text-warm-500'
+                        }`}>
+                          {r.isActive ? 'Open Now' : 'Closed'}
+                        </span>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                    <div className="p-5">
+                      <div className="flex items-start justify-between mb-1">
+                        <h3 className="font-display text-lg text-cream font-medium group-hover:text-amber transition-colors">{r.name}</h3>
+                      </div>
+                      <p className="text-cream-muted text-sm mb-3">{cuisineLabel}</p>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-1 min-w-0">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              size={13}
+                              className={i < Math.floor(r.rating || 0) ? 'text-amber fill-amber' : 'text-warm-600'}
+                            />
+                          ))}
+                          <span className="text-amber text-sm font-semibold ml-1">{r.rating || 'New'}</span>
+                          <span className="text-warm-500 text-xs ml-1">({r.totalReviews || 0})</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-cream-muted text-xs truncate max-w-[45%]">
+                          <MapPin size={12} className="text-amber shrink-0" />
+                          <span className="truncate">{r.address || 'Location TBD'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </>
         )}
