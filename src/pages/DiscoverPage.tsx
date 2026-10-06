@@ -7,6 +7,12 @@ import { Restaurant } from '../types/domain';
 
 const cuisines = ['All', 'American', 'Indian', 'French', 'Japanese', 'Italian', 'Mediterranean'];
 const ratings = ['Any', '4.5+', '4.7+', '4.9+'];
+const fallbackAreas = [
+  { label: 'Downtown', lat: 40.7128, lng: -74.0060 },
+  { label: 'SoHo', lat: 40.7233, lng: -74.0020 },
+  { label: 'Brooklyn', lat: 40.6782, lng: -73.9442 },
+  { label: 'Midtown', lat: 40.7580, lng: -73.9855 },
+];
 
 const getCuisineList = (cuisine: string | string[] | undefined): string[] => {
   if (Array.isArray(cuisine)) {
@@ -30,6 +36,7 @@ export default function DiscoverPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedArea, setSelectedArea] = useState('Downtown');
 
   useEffect(() => {
     const fetchRestaurants = async () => {
@@ -53,11 +60,14 @@ export default function DiscoverPage() {
           );
         });
 
-        const data = await restaurantService.getAll(
-          browserLocation
-            ? { lat: browserLocation.latitude, lng: browserLocation.longitude, refresh: true }
-            : undefined
-        );
+        const fallbackLocation = fallbackAreas.find(area => area.label === selectedArea) ?? fallbackAreas[0];
+        const location = browserLocation ?? fallbackLocation;
+
+        const data = await restaurantService.getAll({
+          lat: 'latitude' in location ? location.latitude : location.lat,
+          lng: 'longitude' in location ? location.longitude : location.lng,
+          refresh: true,
+        });
 
         setRestaurants(data);
       } catch {
@@ -68,7 +78,7 @@ export default function DiscoverPage() {
     };
 
     fetchRestaurants();
-  }, []);
+  }, [selectedArea]);
 
   const filtered = [...restaurants]
     .filter(r => {
@@ -112,11 +122,19 @@ export default function DiscoverPage() {
                 className="w-full bg-warm-800 border border-warm-700 rounded-xl pl-11 pr-4 py-3.5 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm"
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-3.5 bg-warm-800 border border-warm-700 rounded-xl text-cream-muted hover:text-cream hover:border-warm-600 transition-all text-sm">
-              <MapPin size={16} className="text-amber" />
-              Downtown
-              <ChevronDown size={14} />
-            </button>
+            <div className="relative">
+              <select
+                value={selectedArea}
+                onChange={(event) => setSelectedArea(event.target.value)}
+                className="appearance-none flex items-center gap-2 px-4 py-3.5 bg-warm-800 border border-warm-700 rounded-xl text-cream-muted hover:text-cream hover:border-warm-600 transition-all text-sm pr-10"
+              >
+                {fallbackAreas.map((area) => (
+                  <option key={area.label} value={area.label}>{area.label}</option>
+                ))}
+              </select>
+              <MapPin size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-amber" />
+              <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-warm-500" />
+            </div>
           </div>
         </div>
       </div>
@@ -217,7 +235,10 @@ export default function DiscoverPage() {
                         alt={r.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute top-3 right-3">
+                      <div className="absolute top-3 right-3 flex items-center gap-2">
+                        <span className="px-2 py-1 rounded-full bg-amber/15 text-amber border border-amber/40 text-[10px] font-semibold uppercase tracking-[0.12em]">
+                          Live data
+                        </span>
                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
                           r.isActive ? 'bg-green-900/80 text-green-300' : 'bg-warm-950/80 text-warm-500'
                         }`}>
