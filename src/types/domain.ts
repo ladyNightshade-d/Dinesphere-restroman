@@ -10,6 +10,14 @@ export interface Restaurant {
   description?: string;
   phone?: string;
   email?: string;
+  website?: string;
+  bookingUrl?: string;
+  orderingUrl?: string;
+  source?: 'admin' | 'openstreetmap';
+  sourceId?: string;
+  location?: { lat: number; lng: number };
+  onlineBooking?: boolean;
+  onlineOrdering?: boolean;
   deliveryFee?: number;
   owner?: string | { _id: string };
   openingHours?: { day: string; open: string; close: string; closed: boolean }[];

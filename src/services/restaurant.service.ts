@@ -1,5 +1,11 @@
 import API from './api';
 
+export interface GeocodedLocation {
+  label: string;
+  lat: number;
+  lng: number;
+}
+
 export const restaurantService = {
   getAll: async (filters?: { cuisine?: string; search?: string; lat?: number; lng?: number; refresh?: boolean }) => {
     const res = await API.get('/restaurants', { params: filters });
@@ -9,6 +15,11 @@ export const restaurantService = {
   getById: async (id: string) => {
     const res = await API.get(`/restaurants/${id}`);
     return res.data.restaurant;
+  },
+
+  searchLocation: async (query: string): Promise<GeocodedLocation[]> => {
+    const res = await API.get('/restaurants/geocode', { params: { query } });
+    return res.data.locations;
   },
 
   getMenu: async (restaurantId: string) => {

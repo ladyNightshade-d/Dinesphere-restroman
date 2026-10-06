@@ -1,18 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Star, ChevronDown } from 'lucide-react';
+import { Search, MapPin, Star, ExternalLink } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { restaurantService } from '../services/restaurant.service';
 import { Restaurant } from '../types/domain';
 
 const cuisines = ['All', 'American', 'Indian', 'French', 'Japanese', 'Italian', 'Mediterranean'];
 const ratings = ['Any', '4.5+', '4.7+', '4.9+'];
-const fallbackAreas = [
-  { label: 'Downtown', lat: 40.7128, lng: -74.0060 },
-  { label: 'SoHo', lat: 40.7233, lng: -74.0020 },
-  { label: 'Brooklyn', lat: 40.6782, lng: -73.9442 },
-  { label: 'Midtown', lat: 40.7580, lng: -73.9855 },
-];
 
 const getCuisineList = (cuisine: string | string[] | undefined): string[] => {
   if (Array.isArray(cuisine)) {
@@ -36,49 +30,68 @@ export default function DiscoverPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedArea, setSelectedArea] = useState('Downtown');
+  const [locationQuery, setLocationQuery] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
 
   useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        setLoading(true);
-        setError('');
+    if (!navigator.geolocation) {
+      setLoading(false);
+      return;
+    }
 
-        const browserLocation = await new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
-          if (!navigator.geolocation) {
-            resolve(null);
-            return;
-          }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        setSelectedLocation('Your current location');
+        try {
+          const data = await restaurantService.getAll({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            refresh: true,
+          });
+          setRestaurants(data);
+        } catch {
+          setError('Failed to load restaurants near you');
+        } finally {
+          setLoading(false);
+        }
+      },
+      () => setLoading(false),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+    );
+  }, []);
 
-          navigator.geolocation.getCurrentPosition(
-            (position) => resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            }),
-            () => resolve(null),
-            { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
-          );
-        });
+  const searchByLocation = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = locationQuery.trim();
+    if (!query) {
+      setError('Enter a city, neighborhood, or address to search.');
+      return;
+    }
 
-        const fallbackLocation = fallbackAreas.find(area => area.label === selectedArea) ?? fallbackAreas[0];
-        const location = browserLocation ?? fallbackLocation;
-
-        const data = await restaurantService.getAll({
-          lat: 'latitude' in location ? location.latitude : location.lat,
-          lng: 'longitude' in location ? location.longitude : location.lng,
-          refresh: true,
-        });
-
-        setRestaurants(data);
-      } catch {
-        setError('Failed to load restaurants near you');
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    setError('');
+    try {
+      const locations = await restaurantService.searchLocation(query);
+      const location = locations[0];
+      if (!location) {
+        setError('We could not find that location. Try a nearby city or neighborhood.');
+        setRestaurants([]);
+        return;
       }
-    };
 
-    fetchRestaurants();
-  }, [selectedArea]);
+      const data = await restaurantService.getAll({
+        lat: location.lat,
+        lng: location.lng,
+        refresh: true,
+      });
+      setSelectedLocation(location.label);
+      setRestaurants(data);
+    } catch {
+      setError('Location search failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = [...restaurants]
     .filter(r => {
@@ -122,20 +135,31 @@ export default function DiscoverPage() {
                 className="w-full bg-warm-800 border border-warm-700 rounded-xl pl-11 pr-4 py-3.5 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm"
               />
             </div>
-            <div className="relative">
-              <select
-                value={selectedArea}
-                onChange={(event) => setSelectedArea(event.target.value)}
-                className="appearance-none flex items-center gap-2 px-4 py-3.5 bg-warm-800 border border-warm-700 rounded-xl text-cream-muted hover:text-cream hover:border-warm-600 transition-all text-sm pr-10"
+            <form className="flex gap-2" onSubmit={searchByLocation}>
+              <div className="relative">
+                <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber" />
+                <input
+                  type="search"
+                  value={locationQuery}
+                  onChange={(event) => setLocationQuery(event.target.value)}
+                  placeholder="City, area, or address"
+                  aria-label="Search restaurants by city or area"
+                  className="w-56 bg-warm-800 border border-warm-700 rounded-xl pl-10 pr-3 py-3.5 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-3.5 bg-amber text-warm-950 rounded-xl text-sm font-semibold hover:bg-amber-hover transition-colors"
               >
-                {fallbackAreas.map((area) => (
-                  <option key={area.label} value={area.label}>{area.label}</option>
-                ))}
-              </select>
-              <MapPin size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-amber" />
-              <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-warm-500" />
-            </div>
+                Search area
+              </button>
+            </form>
           </div>
+          <p className="text-warm-500 text-xs mt-3">
+            {selectedLocation
+              ? `Showing nearby listings for ${selectedLocation}`
+              : 'Allow location access or search any city or neighborhood.'}
+          </p>
         </div>
       </div>
 
@@ -207,8 +231,10 @@ export default function DiscoverPage() {
           <div className="text-center py-24">
             <p className="font-display text-2xl text-cream mb-3">No restaurants found</p>
             <p className="text-cream-muted text-sm">
-              {restaurants.length === 0
-                ? 'No restaurants have been added yet. Add one via the Admin portal!'
+              {!selectedLocation
+                ? 'Search a city, neighborhood, or address above to find nearby restaurants.'
+                : restaurants.length === 0
+                  ? 'No nearby restaurant listings were found for this location.'
                 : 'Try adjusting your filters.'}
             </p>
           </div>
@@ -223,10 +249,14 @@ export default function DiscoverPage() {
                 const cuisineList = getCuisineList(r.cuisine);
                 const cuisineLabel = cuisineList.length ? cuisineList.join(', ') : 'Various cuisines';
 
+                const isLiveListing = r.source === 'openstreetmap';
+                const directionsUrl = r.location
+                  ? `https://www.openstreetmap.org/?mlat=${r.location.lat}&mlon=${r.location.lng}#map=17/${r.location.lat}/${r.location.lng}`
+                  : undefined;
+
                 return (
-                  <Link
+                  <article
                     key={r._id}
-                    to={`/restaurant/${r._id}`}
                     className="group bg-warm-800 border border-warm-700 rounded-2xl overflow-hidden hover:border-amber/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-amber/10"
                   >
                     <div className="relative aspect-[16/10] overflow-hidden">
@@ -236,19 +266,27 @@ export default function DiscoverPage() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute top-3 right-3 flex items-center gap-2">
-                        <span className="px-2 py-1 rounded-full bg-amber/15 text-amber border border-amber/40 text-[10px] font-semibold uppercase tracking-[0.12em]">
-                          Live data
-                        </span>
+                        {isLiveListing && (
+                          <span className="px-2 py-1 rounded-full bg-amber/15 text-amber border border-amber/40 text-[10px] font-semibold uppercase tracking-[0.12em]">
+                            Live data
+                          </span>
+                        )}
                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          r.isActive ? 'bg-green-900/80 text-green-300' : 'bg-warm-950/80 text-warm-500'
+                          !isLiveListing && r.isActive ? 'bg-green-900/80 text-green-300' : 'bg-warm-950/80 text-warm-500'
                         }`}>
-                          {r.isActive ? 'Open Now' : 'Closed'}
+                          {isLiveListing ? 'Local listing' : r.isActive ? 'Open Now' : 'Closed'}
                         </span>
                       </div>
                     </div>
                     <div className="p-5">
                       <div className="flex items-start justify-between mb-1">
-                        <h3 className="font-display text-lg text-cream font-medium group-hover:text-amber transition-colors">{r.name}</h3>
+                        {isLiveListing ? (
+                          <h3 className="font-display text-lg text-cream font-medium">{r.name}</h3>
+                        ) : (
+                          <h3 className="font-display text-lg text-cream font-medium group-hover:text-amber transition-colors">
+                            <Link to={`/restaurant/${r._id}`}>{r.name}</Link>
+                          </h3>
+                        )}
                       </div>
                       <p className="text-cream-muted text-sm mb-3">{cuisineLabel}</p>
                       <div className="flex items-center justify-between gap-3">
@@ -268,13 +306,61 @@ export default function DiscoverPage() {
                           <span className="truncate">{r.address || 'Location TBD'}</span>
                         </div>
                       </div>
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        {r.bookingUrl && (
+                          <a
+                            href={r.bookingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-amber px-3 py-2 text-xs font-semibold text-warm-950 hover:bg-amber-hover"
+                          >
+                            Book online <ExternalLink size={13} />
+                          </a>
+                        )}
+                        {r.orderingUrl && (
+                          <a
+                            href={r.orderingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-amber px-3 py-2 text-xs font-semibold text-warm-950 hover:bg-amber-hover"
+                          >
+                            Order online <ExternalLink size={13} />
+                          </a>
+                        )}
+                        {!r.bookingUrl && !r.orderingUrl && r.website && (
+                          <a
+                            href={r.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-warm-600 px-3 py-2 text-xs font-medium text-cream-muted hover:text-cream"
+                          >
+                            Website <ExternalLink size={13} />
+                          </a>
+                        )}
+                        {directionsUrl && (
+                          <a
+                            href={directionsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-warm-600 px-3 py-2 text-xs font-medium text-cream-muted hover:text-cream"
+                          >
+                            Directions <ExternalLink size={13} />
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  </Link>
+                  </article>
                 );
               })}
             </div>
           </>
         )}
+        <p className="text-center text-warm-500 text-xs mt-8">
+          Map data ©{' '}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline hover:text-cream-muted">
+            OpenStreetMap contributors
+          </a>
+        </p>
       </div>
     </div>
   );

@@ -16,6 +16,8 @@ Create a `.env` file from `.env.example` and set both URLs to the backend you wa
 - `VITE_API_URL`: REST API base URL, including `/api`
 - `VITE_SOCKET_URL`: Socket.IO server URL, without `/api`
 
+Restaurant discovery uses browser location when permitted. If location access is denied, enter a city, neighborhood, or address to search there. Nearby listings and location search use OpenStreetMap data; booking and ordering buttons appear only when a listing provides a direct tagged link.
+
 ## Vercel deployment
 
 Use these settings when importing the repository into Vercel:
