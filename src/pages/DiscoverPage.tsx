@@ -30,6 +30,7 @@ export default function DiscoverPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [liveDataUnavailable, setLiveDataUnavailable] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
 
@@ -43,12 +44,13 @@ export default function DiscoverPage() {
       async (position) => {
         setSelectedLocation('Your current location');
         try {
-          const data = await restaurantService.getAll({
+          const result = await restaurantService.getAll({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
             refresh: true,
           });
-          setRestaurants(data);
+          setRestaurants(result.restaurants);
+          setLiveDataUnavailable(result.liveDataUnavailable);
         } catch {
           setError('Failed to load restaurants near you');
         } finally {
@@ -79,13 +81,14 @@ export default function DiscoverPage() {
         return;
       }
 
-      const data = await restaurantService.getAll({
+      const result = await restaurantService.getAll({
         lat: location.lat,
         lng: location.lng,
         refresh: true,
       });
       setSelectedLocation(location.label);
-      setRestaurants(data);
+      setRestaurants(result.restaurants);
+      setLiveDataUnavailable(result.liveDataUnavailable);
     } catch {
       setError('Location search failed. Please try again.');
     } finally {
@@ -226,16 +229,26 @@ export default function DiscoverPage() {
           </div>
         )}
 
+        {!loading && !error && liveDataUnavailable && (
+          <div className="mt-6 rounded-xl border border-amber/30 bg-amber/10 px-4 py-3 text-center text-sm text-amber">
+            Live nearby listings are temporarily unavailable. Try searching another area in a moment.
+          </div>
+        )}
+
         {/* Empty state — no restaurants in DB yet */}
         {!loading && !error && filtered.length === 0 && (
           <div className="text-center py-24">
-            <p className="font-display text-2xl text-cream mb-3">No restaurants found</p>
+            <p className="font-display text-2xl text-cream mb-3">
+              {liveDataUnavailable ? 'Could not check nearby restaurants' : 'No restaurants found nearby'}
+            </p>
             <p className="text-cream-muted text-sm">
               {!selectedLocation
                 ? 'Search a city, neighborhood, or address above to find nearby restaurants.'
-                : restaurants.length === 0
-                  ? 'No nearby restaurant listings were found for this location.'
-                : 'Try adjusting your filters.'}
+                : liveDataUnavailable
+                  ? 'Please try searching this area again later.'
+                  : restaurants.length === 0
+                    ? 'There are no restaurant listings in this area yet. Try a nearby city or neighborhood.'
+                    : 'Try adjusting your filters.'}
             </p>
           </div>
         )}
