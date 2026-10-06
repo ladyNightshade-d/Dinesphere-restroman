@@ -35,14 +35,38 @@ export default function DiscoverPage() {
     const fetchRestaurants = async () => {
       try {
         setLoading(true);
-        const data = await restaurantService.getAll();
+        setError('');
+
+        const browserLocation = await new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
+          if (!navigator.geolocation) {
+            resolve(null);
+            return;
+          }
+
+          navigator.geolocation.getCurrentPosition(
+            (position) => resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            }),
+            () => resolve(null),
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+          );
+        });
+
+        const data = await restaurantService.getAll(
+          browserLocation
+            ? { lat: browserLocation.latitude, lng: browserLocation.longitude, refresh: true }
+            : undefined
+        );
+
         setRestaurants(data);
       } catch {
-        setError('Failed to load restaurants');
+        setError('Failed to load restaurants near you');
       } finally {
         setLoading(false);
       }
     };
+
     fetchRestaurants();
   }, []);
 

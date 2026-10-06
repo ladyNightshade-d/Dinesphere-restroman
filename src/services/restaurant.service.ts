@@ -1,7 +1,7 @@
 import API from './api';
 
 export const restaurantService = {
-  getAll: async (filters?: { cuisine?: string; search?: string }) => {
+  getAll: async (filters?: { cuisine?: string; search?: string; lat?: number; lng?: number; refresh?: boolean }) => {
     const res = await API.get('/restaurants', { params: filters });
     return res.data.restaurants;
   },
