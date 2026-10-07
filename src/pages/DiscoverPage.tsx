@@ -7,6 +7,38 @@ import { Restaurant } from '../types/domain';
 
 const cuisines = ['All', 'American', 'Indian', 'French', 'Japanese', 'Italian', 'Mediterranean'];
 const ratings = ['Any', '4.5+', '4.7+', '4.9+'];
+const rwandaDistricts = [
+  { name: 'Gasabo', province: 'Kigali City' },
+  { name: 'Kicukiro', province: 'Kigali City' },
+  { name: 'Nyarugenge', province: 'Kigali City' },
+  { name: 'Burera', province: 'Northern Province' },
+  { name: 'Gakenke', province: 'Northern Province' },
+  { name: 'Gicumbi', province: 'Northern Province' },
+  { name: 'Musanze', province: 'Northern Province' },
+  { name: 'Rulindo', province: 'Northern Province' },
+  { name: 'Gisagara', province: 'Southern Province' },
+  { name: 'Huye', province: 'Southern Province' },
+  { name: 'Kamonyi', province: 'Southern Province' },
+  { name: 'Muhanga', province: 'Southern Province' },
+  { name: 'Nyamagabe', province: 'Southern Province' },
+  { name: 'Nyanza', province: 'Southern Province' },
+  { name: 'Nyaruguru', province: 'Southern Province' },
+  { name: 'Ruhango', province: 'Southern Province' },
+  { name: 'Bugesera', province: 'Eastern Province' },
+  { name: 'Gatsibo', province: 'Eastern Province' },
+  { name: 'Kayonza', province: 'Eastern Province' },
+  { name: 'Kirehe', province: 'Eastern Province' },
+  { name: 'Ngoma', province: 'Eastern Province' },
+  { name: 'Nyagatare', province: 'Eastern Province' },
+  { name: 'Rwamagana', province: 'Eastern Province' },
+  { name: 'Karongi', province: 'Western Province' },
+  { name: 'Ngororero', province: 'Western Province' },
+  { name: 'Nyabihu', province: 'Western Province' },
+  { name: 'Nyamasheke', province: 'Western Province' },
+  { name: 'Rubavu', province: 'Western Province' },
+  { name: 'Rusizi', province: 'Western Province' },
+  { name: 'Rutsiro', province: 'Western Province' },
+];
 
 const getCuisineList = (cuisine: string | string[] | undefined): string[] => {
   if (Array.isArray(cuisine)) {
@@ -35,36 +67,24 @@ export default function DiscoverPage() {
   const [selectedLocation, setSelectedLocation] = useState('');
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLoading(false);
-      return;
-    }
+    const loadRwandaRestaurants = async () => {
+      setSelectedLocation('Rwanda');
+      try {
+        const result = await restaurantService.getRwanda();
+        setRestaurants(result.restaurants);
+        setLiveDataUnavailable(result.liveDataUnavailable);
+      } catch {
+        setError('Could not load Rwanda restaurant listings. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        setSelectedLocation('Your current location');
-        try {
-          const result = await restaurantService.getAll({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            refresh: true,
-          });
-          setRestaurants(result.restaurants);
-          setLiveDataUnavailable(result.liveDataUnavailable);
-        } catch {
-          setError('Failed to load restaurants near you');
-        } finally {
-          setLoading(false);
-        }
-      },
-      () => setLoading(false),
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
-    );
+    loadRwandaRestaurants();
   }, []);
 
-  const searchByLocation = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const query = locationQuery.trim();
+  const searchByLocation = async (input: string) => {
+    const query = input.trim();
     if (!query) {
       setError('Enter a city, neighborhood, or address to search.');
       return;
@@ -96,6 +116,11 @@ export default function DiscoverPage() {
     }
   };
 
+  const handleLocationSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void searchByLocation(locationQuery);
+  };
+
   const filtered = [...restaurants]
     .filter(r => {
       const cuisineList = getCuisineList(r.cuisine);
@@ -118,6 +143,7 @@ export default function DiscoverPage() {
       if (activeScore !== 0) return activeScore;
       return (b.rating || 0) - (a.rating || 0);
     });
+  const displayedRestaurants = search.trim() ? filtered : filtered.slice(0, 18);
 
   return (
     <div className="bg-warm-950 min-h-screen pt-20">
@@ -126,7 +152,7 @@ export default function DiscoverPage() {
       {/* Search header */}
       <div className="bg-warm-900 border-b border-warm-700 px-16 py-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="font-display text-3xl text-cream mb-6">Discover Near You</h1>
+          <h1 className="font-display text-3xl text-cream mb-6">Discover Restaurants in Rwanda</h1>
           <div className="flex items-center gap-3">
             <div className="flex-1 relative">
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-warm-500" />
@@ -138,7 +164,7 @@ export default function DiscoverPage() {
                 className="w-full bg-warm-800 border border-warm-700 rounded-xl pl-11 pr-4 py-3.5 text-cream placeholder-warm-500 focus:outline-none focus:border-amber transition-colors text-sm"
               />
             </div>
-            <form className="flex gap-2" onSubmit={searchByLocation}>
+            <form className="flex gap-2" onSubmit={handleLocationSubmit}>
               <div className="relative">
                 <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-amber" />
                 <input
@@ -161,7 +187,7 @@ export default function DiscoverPage() {
           <p className="text-warm-500 text-xs mt-3">
             {selectedLocation
               ? `Showing nearby listings for ${selectedLocation}`
-              : 'Allow location access or search any city or neighborhood.'}
+              : 'Search any restaurant or explore a district in Rwanda.'}
           </p>
         </div>
       </div>
@@ -217,7 +243,7 @@ export default function DiscoverPage() {
           <div className="flex items-center justify-center py-24">
             <div className="text-center">
               <div className="w-10 h-10 border-2 border-amber border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-cream-muted text-sm">Finding restaurants near you...</p>
+              <p className="text-cream-muted text-sm">Loading restaurant listings across Rwanda...</p>
             </div>
           </div>
         )}
@@ -247,18 +273,22 @@ export default function DiscoverPage() {
                 : liveDataUnavailable
                   ? 'Please try searching this area again later.'
                   : restaurants.length === 0
-                    ? 'There are no restaurant listings in this area yet. Try a nearby city or neighborhood.'
+                    ? 'There are no restaurant listings here yet. Choose one of the Rwanda districts below to explore.'
                     : 'Try adjusting your filters.'}
             </p>
           </div>
         )}
 
         {/* Results */}
-        {!loading && !error && filtered.length > 0 && (
+        {!loading && !error && displayedRestaurants.length > 0 && (
           <>
-            <p className="text-cream-muted text-sm mb-6">{filtered.length} restaurants found</p>
+            <p className="text-cream-muted text-sm mb-6">
+              {search.trim()
+                ? `${filtered.length} restaurant listings match your search`
+                : `Showing ${displayedRestaurants.length} of ${restaurants.length} Rwanda listings. Search by name to find a specific restaurant.`}
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
-              {filtered.map(r => {
+              {displayedRestaurants.map(r => {
                 const cuisineList = getCuisineList(r.cuisine);
                 const cuisineLabel = cuisineList.length ? cuisineList.join(', ') : 'Various cuisines';
 
@@ -367,6 +397,34 @@ export default function DiscoverPage() {
               })}
             </div>
           </>
+        )}
+        {!loading && !error && (
+          <section className="mt-16 border-t border-warm-800 pt-10">
+            <div className="mb-6">
+              <h2 className="font-display text-2xl text-cream">Explore Rwanda by district</h2>
+              <p className="text-cream-muted text-sm mt-2">
+                Choose a district to find nearby restaurant listings. Restaurant coverage varies by area.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+              {rwandaDistricts.map((district) => (
+                <button
+                  key={district.name}
+                  type="button"
+                  onClick={() => {
+                    const query = `${district.name} District, Rwanda`;
+                    setLocationQuery(query);
+                    setSearch('');
+                    void searchByLocation(query);
+                  }}
+                  className="text-left rounded-xl border border-warm-700 bg-warm-900 px-4 py-3 hover:border-amber/50 transition-colors"
+                >
+                  <span className="block text-sm font-medium text-cream">{district.name}</span>
+                  <span className="block text-xs text-warm-500 mt-1">{district.province}</span>
+                </button>
+              ))}
+            </div>
+          </section>
         )}
         <p className="text-center text-warm-500 text-xs mt-8">
           Map data ©{' '}

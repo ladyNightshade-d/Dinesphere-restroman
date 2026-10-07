@@ -16,7 +16,7 @@ Create a `.env` file from `.env.example` and set both URLs to the backend you wa
 - `VITE_API_URL`: REST API base URL, including `/api`
 - `VITE_SOCKET_URL`: Socket.IO server URL, without `/api`
 
-Restaurant discovery uses browser location when permitted. If location access is denied, enter a city, neighborhood, or address to search there. Nearby listings and location search use OpenStreetMap data; booking and ordering buttons appear only when a listing provides a direct tagged link.
+Restaurant discovery is focused on Rwanda. The first directory request imports named restaurant, cafe, and fast-food listings from OpenStreetMap into the backend database; users can search those listings or choose any Rwandan district to find nearby venues. Coverage depends on mapped data and may vary by district. Booking and ordering buttons appear only when a listing provides a direct tagged link.
 
 ## Vercel deployment
 

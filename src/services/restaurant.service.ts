@@ -13,6 +13,11 @@ export interface RestaurantSearchResult {
 }
 
 export const restaurantService = {
+  getRwanda: async (refresh = false): Promise<RestaurantSearchResult> => {
+    const res = await API.get('/restaurants/rwanda', { params: refresh ? { refresh: true } : undefined });
+    return res.data;
+  },
+
   getAll: async (filters?: { cuisine?: string; search?: string; lat?: number; lng?: number; refresh?: boolean }) => {
     const res = await API.get('/restaurants', { params: filters });
     return res.data as RestaurantSearchResult;
