@@ -299,6 +299,7 @@ export default function DiscoverPage() {
                 const cuisineList = getCuisineList(r.cuisine);
                 const cuisineLabel = cuisineList.length ? cuisineList.join(', ') : 'Various cuisines';
 
+                const isDirectoryListing = r.source === 'openstreetmap' || r.source === 'manual';
                 const isLiveListing = r.source === 'openstreetmap';
                 const directionsUrl = r.location
                   ? `https://www.openstreetmap.org/?mlat=${r.location.lat}&mlon=${r.location.lng}#map=17/${r.location.lat}/${r.location.lng}`
@@ -315,7 +316,7 @@ export default function DiscoverPage() {
                         alt={r.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      {isLiveListing && r.imageCredit && (
+                      {isDirectoryListing && r.imageCredit && (
                         <a
                           href={r.imageAttributionUrl}
                           target="_blank"
@@ -332,15 +333,15 @@ export default function DiscoverPage() {
                           </span>
                         )}
                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          !isLiveListing && r.isActive ? 'bg-green-900/80 text-green-300' : 'bg-warm-950/80 text-warm-500'
+                          !isDirectoryListing && r.isActive ? 'bg-green-900/80 text-green-300' : 'bg-warm-950/80 text-warm-500'
                         }`}>
-                          {isLiveListing ? 'Local listing' : r.isActive ? 'Open Now' : 'Closed'}
+                          {isDirectoryListing ? 'Local listing' : r.isActive ? 'Open Now' : 'Closed'}
                         </span>
                       </div>
                     </div>
                     <div className="p-5">
                       <div className="flex items-start justify-between mb-1">
-                        {isLiveListing ? (
+                        {isDirectoryListing ? (
                           <h3 className="font-display text-lg text-cream font-medium">{r.name}</h3>
                         ) : (
                           <h3 className="font-display text-lg text-cream font-medium group-hover:text-amber transition-colors">

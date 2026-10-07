@@ -14,7 +14,7 @@ export interface Restaurant {
   osmUrl?: string;
   bookingUrl?: string;
   orderingUrl?: string;
-  source?: 'admin' | 'openstreetmap';
+  source?: 'admin' | 'openstreetmap' | 'manual';
   sourceId?: string;
   district?: string;
   province?: string;
