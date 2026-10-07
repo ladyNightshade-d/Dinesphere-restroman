@@ -11,10 +11,13 @@ export interface Restaurant {
   phone?: string;
   email?: string;
   website?: string;
+  osmUrl?: string;
   bookingUrl?: string;
   orderingUrl?: string;
   source?: 'admin' | 'openstreetmap';
   sourceId?: string;
+  district?: string;
+  province?: string;
   location?: { lat: number; lng: number };
   onlineBooking?: boolean;
   onlineOrdering?: boolean;

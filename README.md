@@ -16,7 +16,7 @@ Create a `.env` file from `.env.example` and set both URLs to the backend you wa
 - `VITE_API_URL`: REST API base URL, including `/api`
 - `VITE_SOCKET_URL`: Socket.IO server URL, without `/api`
 
-Restaurant discovery is focused on Rwanda. The first directory request imports named restaurant, cafe, and fast-food listings from OpenStreetMap into the backend database; users can search those listings or choose any Rwandan district to find nearby venues. Coverage depends on mapped data and may vary by district. Booking and ordering buttons appear only when a listing provides a direct tagged link.
+Restaurant discovery is focused on Rwanda. The backend seeds MongoDB from the checked-in OpenStreetMap snapshot at `Dinesphere-backend/src/data/rwandaRestaurantSnapshot.json`; this makes the directory available even when the live map service is unavailable. The snapshot contains 55 named restaurant, cafe, and fast-food listings mapped across 15 districts (coverage varies and is not a popularity ranking). Users can search the listings or choose any Rwandan district to find nearby venues. Booking and ordering buttons appear only when a listing provides a direct tagged link. Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database License (ODbL).
 
 ## Vercel deployment
 

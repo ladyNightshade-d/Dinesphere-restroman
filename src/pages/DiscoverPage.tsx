@@ -380,6 +380,16 @@ export default function DiscoverPage() {
                             Website <ExternalLink size={13} />
                           </a>
                         )}
+                        {isLiveListing && r.osmUrl && (
+                          <a
+                            href={r.osmUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-warm-600 px-3 py-2 text-xs font-medium text-cream-muted hover:text-cream"
+                          >
+                            Map listing <ExternalLink size={13} />
+                          </a>
+                        )}
                         {directionsUrl && (
                           <a
                             href={directionsUrl}
