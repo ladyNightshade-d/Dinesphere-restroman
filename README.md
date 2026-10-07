@@ -18,6 +18,8 @@ Create a `.env` file from `.env.example` and set both URLs to the backend you wa
 
 Restaurant discovery is focused on Rwanda. The backend seeds MongoDB from the checked-in OpenStreetMap snapshot at `Dinesphere-backend/src/data/rwandaRestaurantSnapshot.json`; this makes the directory available even when the live map service is unavailable. The snapshot contains 55 named restaurant, cafe, and fast-food listings mapped across 15 districts (coverage varies and is not a popularity ranking). Users can search the listings or choose any Rwandan district to find nearby venues. Booking and ordering buttons appear only when a listing provides a direct tagged link. Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database License (ODbL).
 
+Restaurant preview photos may be cuisine-matched illustrative images rather than venue photos; verified venue photos are explicitly credited. Seeded ratings are clearly marked estimates based on OpenStreetMap place prominence, not customer-review ratings. Cuisine filters are generated from the restaurant data; they only filter categories represented in the current directory data.
+
 ## Vercel deployment
 
 Use these settings when importing the repository into Vercel:

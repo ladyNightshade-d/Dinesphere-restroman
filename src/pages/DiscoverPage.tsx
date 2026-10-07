@@ -5,7 +5,6 @@ import Navbar from '../components/Navbar';
 import { restaurantService } from '../services/restaurant.service';
 import { Restaurant } from '../types/domain';
 
-const cuisines = ['All', 'American', 'Indian', 'French', 'Japanese', 'Italian', 'Mediterranean'];
 const ratings = ['Any', '4.5+', '4.7+', '4.9+'];
 const rwandaDistricts = [
   { name: 'Gasabo', province: 'Kigali City' },
@@ -144,6 +143,11 @@ export default function DiscoverPage() {
       return (b.rating || 0) - (a.rating || 0);
     });
   const displayedRestaurants = search.trim() ? filtered : filtered.slice(0, 18);
+  const cuisines = [
+    'All',
+    ...Array.from(new Set(restaurants.flatMap((restaurant) => getCuisineList(restaurant.cuisine))))
+      .sort((a, b) => a.localeCompare(b)),
+  ];
 
   return (
     <div className="bg-warm-950 min-h-screen pt-20">
@@ -282,10 +286,13 @@ export default function DiscoverPage() {
         {/* Results */}
         {!loading && !error && displayedRestaurants.length > 0 && (
           <>
-            <p className="text-cream-muted text-sm mb-6">
+            <p className="text-cream-muted text-sm mb-2">
               {search.trim()
                 ? `${filtered.length} restaurant listings match your search`
                 : `Showing ${displayedRestaurants.length} of ${restaurants.length} Rwanda listings. Search by name to find a specific restaurant.`}
+            </p>
+            <p className="text-warm-500 text-xs mb-6">
+              Ratings marked as estimates are map-based previews, not verified customer reviews. Illustrative photos are cuisine examples, not photos of that specific venue.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
               {displayedRestaurants.map(r => {
@@ -308,6 +315,16 @@ export default function DiscoverPage() {
                         alt={r.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
+                      {isLiveListing && r.imageCredit && (
+                        <a
+                          href={r.imageAttributionUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute bottom-2 left-2 rounded bg-warm-950/80 px-2 py-1 text-[10px] text-cream-muted hover:text-cream"
+                        >
+                          {r.imageCredit}
+                        </a>
+                      )}
                       <div className="absolute top-3 right-3 flex items-center gap-2">
                         {isLiveListing && (
                           <span className="px-2 py-1 rounded-full bg-amber/15 text-amber border border-amber/40 text-[10px] font-semibold uppercase tracking-[0.12em]">
@@ -342,7 +359,16 @@ export default function DiscoverPage() {
                             />
                           ))}
                           <span className="text-amber text-sm font-semibold ml-1">{r.rating || 'New'}</span>
-                          <span className="text-warm-500 text-xs ml-1">({r.totalReviews || 0})</span>
+                          {r.ratingIsEstimate ? (
+                            <span
+                              className="text-warm-500 text-[10px] ml-1"
+                              title={r.ratingEstimateBasis ?? 'Preview estimate, not a verified customer rating'}
+                            >
+                              estimate*
+                            </span>
+                          ) : (
+                            <span className="text-warm-500 text-xs ml-1">({r.totalReviews || 0})</span>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 text-cream-muted text-xs truncate max-w-[45%]">
                           <MapPin size={12} className="text-amber shrink-0" />

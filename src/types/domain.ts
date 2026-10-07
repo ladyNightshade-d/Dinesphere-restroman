@@ -18,6 +18,11 @@ export interface Restaurant {
   sourceId?: string;
   district?: string;
   province?: string;
+  ratingIsEstimate?: boolean;
+  ratingEstimateBasis?: string;
+  imageIsIllustrative?: boolean;
+  imageAttributionUrl?: string;
+  imageCredit?: string;
   location?: { lat: number; lng: number };
   onlineBooking?: boolean;
   onlineOrdering?: boolean;
